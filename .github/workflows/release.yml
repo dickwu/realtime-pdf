@@ -42,8 +42,6 @@ jobs:
           prerelease: false
           generateReleaseNotes: true
           args: --target ${{ matrix.target }} --bundles dmg --ci --no-sign
-          releaseAssetNamePattern: "realtime-pdf_[version]_[arch].[ext]"
-
   update-homebrew-tap:
     needs: publish-tauri
     runs-on: macos-latest
@@ -71,25 +69,27 @@ jobs:
           gh release download "${GITHUB_REF_NAME}" \
             --repo "${GITHUB_REPOSITORY}" \
             --dir /tmp/realtime-pdf-assets \
-            --pattern "realtime-pdf_*.dmg"
+            --pattern "*.dmg"
 
       - name: Update cask
         run: |
           VERSION="${GITHUB_REF_NAME#v}"
-          ARM_SHA="$(shasum -a 256 /tmp/realtime-pdf-assets/realtime-pdf_${VERSION}_aarch64.dmg | awk '{print $1}')"
-          INTEL_SHA="$(shasum -a 256 /tmp/realtime-pdf-assets/realtime-pdf_${VERSION}_x64.dmg | awk '{print $1}')"
+          ARM_FILE="$(basename "$(find /tmp/realtime-pdf-assets -type f -name '*aarch64*.dmg' | head -n 1)")"
+          INTEL_FILE="$(basename "$(find /tmp/realtime-pdf-assets -type f -name '*x64*.dmg' | head -n 1)")"
+          ARM_SHA="$(shasum -a 256 "/tmp/realtime-pdf-assets/${ARM_FILE}" | awk '{print $1}')"
+          INTEL_SHA="$(shasum -a 256 "/tmp/realtime-pdf-assets/${INTEL_FILE}" | awk '{print $1}')"
 
           cat > /tmp/homebrew-tap/Casks/realtime-pdf.rb <<EOF
           cask "realtime-pdf" do
             version "${VERSION}"
 
             on_arm do
-              url "https://github.com/dickwu/realtime-pdf/releases/download/v#{version}/realtime-pdf_#{version}_aarch64.dmg"
+              url "https://github.com/dickwu/realtime-pdf/releases/download/v#{version}/${ARM_FILE}"
               sha256 "${ARM_SHA}"
             end
 
             on_intel do
-              url "https://github.com/dickwu/realtime-pdf/releases/download/v#{version}/realtime-pdf_#{version}_x64.dmg"
+              url "https://github.com/dickwu/realtime-pdf/releases/download/v#{version}/${INTEL_FILE}"
               sha256 "${INTEL_SHA}"
             end
 

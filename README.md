@@ -85,27 +85,6 @@ cargo check --manifest-path src-tauri/Cargo.toml
 bunx tauri build --debug --no-bundle
 ```
 
-## Release
-
-This repo ships with:
-
-- CI workflow for tests, TypeScript, and Tauri build validation
-- Tagged release workflow for macOS DMG artifacts
-- Automatic Homebrew tap cask update for `dickwu/homebrew-tap`
-
-Create a release by pushing a tag:
-
-```bash
-git tag v0.1.2
-git push origin v0.1.2
-```
-
-The release workflow will:
-
-1. Build macOS DMG artifacts for Apple Silicon and Intel
-2. Create or update the GitHub release
-3. Update `dickwu/homebrew-tap` with the new cask version and SHA256 values
-
 ## Project Structure
 
 - `src/app/page.tsx` — main app UI

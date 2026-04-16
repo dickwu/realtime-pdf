@@ -120,31 +120,15 @@ jobs:
 
       - name: Update tap README
         run: |
-          python3 - <<'PY'
-          from pathlib import Path
-          path = Path('/tmp/homebrew-tap/README.md')
-          content = path.read_text()
-          package_row = "| [`realtime-pdf`](https://github.com/dickwu/realtime-pdf) | Cask | Desktop PDF watcher with saved history and regeneration hooks | `brew install --cask realtime-pdf` |"
-          install_block = """## Realtime PDF
+          README=/tmp/homebrew-tap/README.md
+          PACKAGE_ROW='| [`realtime-pdf`](https://github.com/dickwu/realtime-pdf) | Cask | Desktop PDF watcher with saved history and regeneration hooks | `brew install --cask realtime-pdf` |'
+          if ! grep -Fq "$PACKAGE_ROW" "$README"; then
+            python3 -c 'from pathlib import Path; path = Path("/tmp/homebrew-tap/README.md"); content = path.read_text(); header = "## Packages\\n\\n| Package | Type | Description | Install |\\n|---------|------|-------------|---------|\\n"; row = "| [`realtime-pdf`](https://github.com/dickwu/realtime-pdf) | Cask | Desktop PDF watcher with saved history and regeneration hooks | `brew install --cask realtime-pdf` |\\n"; path.write_text(content.replace(header, header + row))'
+          fi
 
-Desktop PDF watcher with saved history, hook-driven regeneration commands, and a full-window PDF viewer.
-
-```bash
-brew install --cask realtime-pdf
-```
-
-If macOS shows a damaged app or quarantine warning, run:
-
-```bash
-sudo xattr -rd com.apple.quarantine "/Applications/Realtime PDF.app"
-```
-"""
-          if package_row not in content:
-              content = content.replace("## Packages\n\n| Package | Type | Description | Install |\n|---------|------|-------------|---------|\n", "## Packages\n\n| Package | Type | Description | Install |\n|---------|------|-------------|---------|\n" + package_row + "\n")
-          if "## Realtime PDF" not in content:
-              content += "\n\n" + install_block
-          path.write_text(content)
-          PY
+          if ! grep -Fq "## Realtime PDF" "$README"; then
+            python3 -c 'from pathlib import Path; path = Path("/tmp/homebrew-tap/README.md"); path.write_text(path.read_text() + "\\n\\n## Realtime PDF\\n\\nDesktop PDF watcher with saved history, hook-driven regeneration commands, and a full-window PDF viewer.\\n\\n```bash\\nbrew install --cask realtime-pdf\\n```\\n\\nIf macOS shows a damaged app or quarantine warning, run:\\n\\n```bash\\nsudo xattr -rd com.apple.quarantine \\"/Applications/Realtime PDF.app\\"\\n```\\n")'
+          fi
 
       - name: Commit and push tap changes
         run: |

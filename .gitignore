@@ -1,0 +1,15 @@
+/node_modules
+/.next
+/dist
+/coverage
+*.tsbuildinfo
+next-env.d.ts
+.omx/
+src-tauri/target/
+src-tauri/gen/schemas
+target/
+.DS_Store
+.env
+.env*.local
+package-lock.json
+yarn.lock

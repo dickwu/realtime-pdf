@@ -1,0 +1,42 @@
+{
+  "$schema": "https://schema.tauri.app/config/2",
+  "productName": "Realtime PDF",
+  "version": "0.1.0",
+  "identifier": "com.gwddeveloper.realtime-pdf",
+  "build": {
+    "beforeDevCommand": "bun run dev:tauri",
+    "devUrl": "http://localhost:3000",
+    "beforeBuildCommand": "bun run build",
+    "frontendDist": "../dist"
+  },
+  "app": {
+    "windows": [
+      {
+        "title": "Realtime PDF",
+        "width": 1280,
+        "height": 900,
+        "minWidth": 960,
+        "minHeight": 720,
+        "visible": false
+      }
+    ],
+    "security": {
+      "csp": "default-src 'self' ipc: http://ipc.localhost; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: asset: http://asset.localhost; media-src 'self' data: blob: asset: http://asset.localhost; object-src 'self' blob: asset: http://asset.localhost; frame-src 'self' blob: asset: http://asset.localhost; connect-src 'self' ipc: http://ipc.localhost;",
+      "assetProtocol": {
+        "enable": true,
+        "scope": ["**"]
+      }
+    },
+    "withGlobalTauri": true
+  },
+  "bundle": {
+    "active": true,
+    "targets": "all",
+    "icon": [
+      "icons/128x128.png",
+      "icons/icon.icns",
+      "icons/icon.ico",
+      "icons/icon.png"
+    ]
+  }
+}

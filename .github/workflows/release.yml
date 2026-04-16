@@ -1,0 +1,154 @@
+name: release
+
+on:
+  push:
+    tags:
+      - "v*"
+
+jobs:
+  publish-tauri:
+    permissions:
+      contents: write
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - platform: macos-latest
+            target: aarch64-apple-darwin
+          - platform: macos-latest
+            target: x86_64-apple-darwin
+    runs-on: ${{ matrix.platform }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: oven-sh/setup-bun@v2
+
+      - name: Install Rust stable
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.target }}
+
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+
+      - uses: tauri-apps/tauri-action@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tagName: ${{ github.ref_name }}
+          releaseName: "Realtime PDF v__VERSION__"
+          releaseBody: "Desktop release for Realtime PDF. Download the DMG that matches your Mac architecture, or install via Homebrew tap."
+          releaseDraft: false
+          prerelease: false
+          generateReleaseNotes: true
+          args: --target ${{ matrix.target }} --bundles dmg --ci --no-sign
+          releaseAssetNamePattern: "realtime-pdf_[version]_[arch].[ext]"
+
+  update-homebrew-tap:
+    needs: publish-tauri
+    runs-on: macos-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Configure Git
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+      - name: Clone Homebrew tap
+        env:
+          TAP_GITHUB_TOKEN: ${{ secrets.TAP_GITHUB_TOKEN }}
+        run: |
+          git clone "https://x-access-token:${TAP_GITHUB_TOKEN}@github.com/dickwu/homebrew-tap.git" /tmp/homebrew-tap
+
+      - name: Download release assets
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          mkdir -p /tmp/realtime-pdf-assets
+          gh release download "${GITHUB_REF_NAME}" \
+            --repo "${GITHUB_REPOSITORY}" \
+            --dir /tmp/realtime-pdf-assets \
+            --pattern "realtime-pdf_*.dmg"
+
+      - name: Update cask
+        run: |
+          VERSION="${GITHUB_REF_NAME#v}"
+          ARM_SHA="$(shasum -a 256 /tmp/realtime-pdf-assets/realtime-pdf_${VERSION}_aarch64.dmg | awk '{print $1}')"
+          INTEL_SHA="$(shasum -a 256 /tmp/realtime-pdf-assets/realtime-pdf_${VERSION}_x64.dmg | awk '{print $1}')"
+
+          cat > /tmp/homebrew-tap/Casks/realtime-pdf.rb <<EOF
+          cask "realtime-pdf" do
+            version "${VERSION}"
+
+            on_arm do
+              url "https://github.com/dickwu/realtime-pdf/releases/download/v#{version}/realtime-pdf_#{version}_aarch64.dmg"
+              sha256 "${ARM_SHA}"
+            end
+
+            on_intel do
+              url "https://github.com/dickwu/realtime-pdf/releases/download/v#{version}/realtime-pdf_#{version}_x64.dmg"
+              sha256 "${INTEL_SHA}"
+            end
+
+            name "Realtime PDF"
+            desc "Desktop PDF watcher with saved history and regeneration hooks"
+            homepage "https://github.com/dickwu/realtime-pdf"
+
+            livecheck do
+              url :url
+              strategy :github_latest
+            end
+
+            app "Realtime PDF.app"
+
+            caveats <<~EOS
+              If macOS shows a "damaged app" or quarantine warning, run:
+                sudo xattr -rd com.apple.quarantine "/Applications/Realtime PDF.app"
+            EOS
+
+            zap trash: [
+              "~/Library/Application Support/com.gwddeveloper.realtime-pdf",
+              "~/Library/Caches/com.gwddeveloper.realtime-pdf",
+              "~/Library/Preferences/com.gwddeveloper.realtime-pdf.plist",
+              "~/Library/Saved Application State/com.gwddeveloper.realtime-pdf.savedState",
+            ]
+          end
+          EOF
+
+      - name: Update tap README
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          path = Path('/tmp/homebrew-tap/README.md')
+          content = path.read_text()
+          package_row = "| [`realtime-pdf`](https://github.com/dickwu/realtime-pdf) | Cask | Desktop PDF watcher with saved history and regeneration hooks | `brew install --cask realtime-pdf` |"
+          install_block = """## Realtime PDF
+
+Desktop PDF watcher with saved history, hook-driven regeneration commands, and a full-window PDF viewer.
+
+```bash
+brew install --cask realtime-pdf
+```
+
+If macOS shows a damaged app or quarantine warning, run:
+
+```bash
+sudo xattr -rd com.apple.quarantine "/Applications/Realtime PDF.app"
+```
+"""
+          if package_row not in content:
+              content = content.replace("## Packages\n\n| Package | Type | Description | Install |\n|---------|------|-------------|---------|\n", "## Packages\n\n| Package | Type | Description | Install |\n|---------|------|-------------|---------|\n" + package_row + "\n")
+          if "## Realtime PDF" not in content:
+              content += "\n\n" + install_block
+          path.write_text(content)
+          PY
+
+      - name: Commit and push tap changes
+        run: |
+          cd /tmp/homebrew-tap
+          git add Casks/realtime-pdf.rb README.md
+          git commit -m "Add Realtime PDF ${GITHUB_REF_NAME}" || exit 0
+          git push origin main

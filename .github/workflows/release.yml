@@ -106,7 +106,7 @@ jobs:
 
             caveats <<~EOS
               If macOS shows a "damaged app" or quarantine warning, run:
-                sudo xattr -rd com.apple.quarantine "/Applications/Realtime PDF.app"
+                sudo xattr -d com.apple.quarantine "/Applications/Realtime PDF.app"
             EOS
 
             zap trash: [
@@ -127,7 +127,7 @@ jobs:
           fi
 
           if ! grep -Fq "## Realtime PDF" "$README"; then
-            python3 -c 'from pathlib import Path; path = Path("/tmp/homebrew-tap/README.md"); path.write_text(path.read_text() + "\\n\\n## Realtime PDF\\n\\nDesktop PDF watcher with saved history, hook-driven regeneration commands, and a full-window PDF viewer.\\n\\n```bash\\nbrew install --cask realtime-pdf\\n```\\n\\nIf macOS shows a damaged app or quarantine warning, run:\\n\\n```bash\\nsudo xattr -rd com.apple.quarantine \\"/Applications/Realtime PDF.app\\"\\n```\\n")'
+            python3 -c 'from pathlib import Path; path = Path("/tmp/homebrew-tap/README.md"); path.write_text(path.read_text() + "\\n\\n## Realtime PDF\\n\\nDesktop PDF watcher with saved history, hook-driven regeneration commands, and a full-window PDF viewer.\\n\\n```bash\\nbrew install --cask realtime-pdf\\n```\\n\\nIf macOS shows a damaged app or quarantine warning, run:\\n\\n```bash\\nsudo xattr -d com.apple.quarantine \\"/Applications/Realtime PDF.app\\"\\n```\\n")'
           fi
 
       - name: Commit and push tap changes

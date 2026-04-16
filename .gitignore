@@ -13,3 +13,5 @@ target/
 .env*.local
 package-lock.json
 yarn.lock
+
+.omc/

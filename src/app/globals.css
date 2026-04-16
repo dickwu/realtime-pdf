@@ -52,6 +52,8 @@ button {
   position: relative;
   width: 100vw;
   height: 100vh;
+  display: flex;
+  flex-direction: column;
   overflow: hidden;
 }
 
@@ -64,9 +66,10 @@ button {
 }
 
 .viewer-layer {
+  flex: 1;
+  min-height: 0;
   width: 100%;
-  height: 100%;
-  padding: 24px;
+  padding: 24px 24px 0;
 }
 
 .viewer-viewport {
@@ -83,7 +86,7 @@ button {
 .viewer-canvas {
   width: 100%;
   height: 100%;
-  min-height: calc(100vh - 48px);
+  min-height: 0;
 }
 
 .embed-pdf-viewer {
@@ -212,52 +215,98 @@ button {
   right: 24px;
   display: inline-flex;
   align-items: center;
-  gap: 10px;
-  padding: 14px 18px;
+  gap: 8px;
+  padding: 11px 14px;
   border-radius: 999px;
   background: rgba(11, 20, 37, 0.88);
   color: #ffffff;
   box-shadow: 0 20px 36px rgba(8, 13, 24, 0.24);
   z-index: 20;
+  font-size: 0.92rem;
+  font-weight: 700;
 }
 
-.viewer-badge {
-  position: fixed;
-  top: 24px;
-  left: 24px;
-  display: grid;
-  gap: 10px;
-  padding: 16px 18px;
-  max-width: min(640px, calc(100vw - 136px));
+.status-bar {
+  position: relative;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 14px;
+  width: 100%;
+  flex-shrink: 0;
+  padding: 8px 18px;
+  border-radius: 0;
+  border-right: 0;
+  border-bottom: 0;
+  border-left: 0;
+  background: var(--surface-strong);
+  box-shadow: 0 -12px 28px rgba(28, 40, 70, 0.08);
   z-index: 15;
 }
 
-.viewer-badge__title {
-  font-size: 1rem;
-  font-weight: 700;
-  letter-spacing: -0.02em;
-}
-
-.viewer-badge__meta {
+.status-bar__watch {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
   gap: 10px;
+  min-width: 0;
 }
 
-.viewer-badge__message {
+.status-bar__message {
   color: var(--muted);
-  font-size: 0.95rem;
+  font-size: 0.9rem;
+}
+
+.status-bar__timestamp {
+  color: var(--muted);
+  font-size: 0.8rem;
+}
+
+.update-checker {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+.update-checker--compact {
+  gap: 0;
+}
+
+.update-checker__message {
+  color: var(--muted);
+  font-size: 0.88rem;
+}
+
+.update-checker__version {
+  color: var(--muted);
+  font-size: 0.88rem;
+  font-weight: 700;
+}
+
+.update-checker__action {
+  border-radius: 12px;
+  padding: 8px 10px;
+  background: rgba(17, 24, 39, 0.06);
+  color: var(--text);
+  font-weight: 700;
+  font-size: 0.88rem;
+}
+
+.update-checker__action:disabled {
+  cursor: wait;
+  opacity: 0.7;
 }
 
 .status-pill {
   display: inline-flex;
   align-items: center;
-  gap: 8px;
-  padding: 10px 12px;
+  gap: 6px;
+  padding: 8px 10px;
   border-radius: 999px;
   font-weight: 700;
-  font-size: 0.9rem;
+  font-size: 0.84rem;
 }
 
 .status-pill.is-live {
@@ -283,7 +332,7 @@ button {
 .zoom-toolbar {
   position: fixed;
   left: 50%;
-  bottom: 24px;
+  bottom: 64px;
   transform: translateX(-50%);
   display: inline-flex;
   align-items: center;
@@ -669,41 +718,58 @@ button {
 
 @media (max-width: 900px) {
   .viewer-layer {
-    padding: 16px;
+    padding: 16px 16px 0;
   }
 
   .viewer-canvas {
-    min-height: calc(100vh - 32px);
+    min-height: 0;
   }
 
-  .viewer-badge,
   .settings-fab {
     top: 16px;
-  }
-
-  .viewer-badge {
-    left: 16px;
-    max-width: calc(100vw - 32px);
-  }
-
-  .settings-fab {
     right: 16px;
   }
 
+  .status-bar {
+    align-items: flex-start;
+    padding: 8px 12px;
+  }
+
   .zoom-toolbar {
-    bottom: 16px;
+    bottom: 60px;
   }
 }
 
 @media (max-width: 720px) {
-  .viewer-badge {
-    right: 16px;
-    max-width: calc(100vw - 32px);
+  .status-bar {
+    justify-content: flex-start;
+    padding: 8px 12px;
   }
 
-  .viewer-badge__meta {
+  .status-bar {
+    flex-direction: column;
+    justify-content: flex-start;
+    align-items: flex-start;
+    padding: 8px 12px;
+  }
+
+  .status-bar__watch {
     flex-direction: column;
     align-items: flex-start;
+  }
+
+  .status-bar__message {
+    font-size: 0.84rem;
+  }
+
+  .update-checker {
+    justify-content: flex-start;
+    align-items: flex-start;
+  }
+
+  .update-checker__message,
+  .update-checker__action {
+    font-size: 0.84rem;
   }
 
   .settings-fab span:last-child {
@@ -732,5 +798,9 @@ button {
   .hook-header {
     flex-direction: column;
     align-items: flex-start;
+  }
+
+  .zoom-toolbar {
+    bottom: 58px;
   }
 }

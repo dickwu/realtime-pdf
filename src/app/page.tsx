@@ -5,13 +5,17 @@ import { convertFileSrc, invoke, isTauri } from "@tauri-apps/api/core";
 import { listen } from "@tauri-apps/api/event";
 import { LazyStore } from "@tauri-apps/plugin-store";
 import PdfViewer from "@/components/PdfViewer";
+import UpdateChecker from "@/components/UpdateChecker";
 import {
   DEFAULT_HOOK_EXECUTION_PATH,
   DEFAULT_ZOOM,
+  normalizeScrollOffset,
+  ZERO_SCROLL_OFFSET,
   ZOOM_STEP,
   type HistoryPathStatus,
   type HookStatus,
   type HookRuntimeState,
+  type ScrollOffset,
   type WatchHistoryEntry,
   type WatchHook,
   appendRevision,
@@ -24,6 +28,7 @@ import {
 const PDF_WATCH_EVENT = "pdf-file-state";
 const HOOK_STATUS_EVENT = "hook-status";
 const SETTINGS_STORE_PATH = "settings.json";
+const SCROLL_OFFSET_SAVE_DELAY_MS = 200;
 
 type PdfSelection = {
   path: string;
@@ -99,9 +104,28 @@ function hookStatusClassName(state: HookRuntimeState): string {
   return "is-idle";
 }
 
+function formatStatusTimestamp(value: string | null): string {
+  if (!value) return "Not reloaded yet";
+
+  const parsed = new Date(value);
+  if (Number.isNaN(parsed.getTime())) {
+    return "Not reloaded yet";
+  }
+
+  return parsed.toLocaleTimeString([], {
+    hour: "numeric",
+    minute: "2-digit",
+    second: "2-digit",
+  });
+}
+
 export default function Home() {
   const storeRef = useRef<LazyStore | null>(null);
+  const scrollPersistTimerRef = useRef<number | null>(null);
+  const pendingScrollPathRef = useRef<string | null>(null);
+  const pendingScrollOffsetRef = useRef<ScrollOffset | null>(null);
   const [selectedPdf, setSelectedPdf] = useState<PdfSelection | null>(null);
+  const [isTauriClient, setIsTauriClient] = useState(false);
   const [isPicking, setIsPicking] = useState(false);
   const [isWatchingPath, setIsWatchingPath] = useState(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
@@ -110,6 +134,9 @@ export default function Home() {
   const [pathInput, setPathInput] = useState("");
   const [zoom, setZoom] = useState(DEFAULT_ZOOM);
   const [watchHistory, setWatchHistory] = useState<WatchHistoryEntry[]>([]);
+  const [savedScrollOffsets, setSavedScrollOffsets] = useState<
+    Record<string, ScrollOffset>
+  >({});
   const [historyStatuses, setHistoryStatuses] = useState<
     Record<string, HistoryPathStatus>
   >({});
@@ -122,12 +149,17 @@ export default function Home() {
   const [statusText, setStatusText] = useState(
     "Pick a PDF or reopen a saved watch path to start watching it.",
   );
+  const [lastReloadedAt, setLastReloadedAt] = useState<string | null>(null);
   const [statusTone, setStatusTone] = useState<"live" | "idle" | "error">(
     "idle",
   );
 
   const viewerSrc = useMemo(() => buildViewerSrc(selectedPdf), [selectedPdf]);
   const zoomPercent = useMemo(() => zoomPercentage(zoom), [zoom]);
+  const lastReloadLabel = useMemo(
+    () => formatStatusTimestamp(lastReloadedAt),
+    [lastReloadedAt],
+  );
   const isBusy = isPicking || isWatchingPath;
 
   const currentHistoryEntry = useMemo(
@@ -137,6 +169,10 @@ export default function Home() {
         : null,
     [selectedPdf, watchHistory],
   );
+
+  useEffect(() => {
+    setIsTauriClient(isTauri());
+  }, []);
 
   const templateCandidates = useMemo(
     () =>
@@ -165,6 +201,7 @@ export default function Home() {
           watchPath: "",
           zoom: DEFAULT_ZOOM,
           watchHistory: [],
+          scrollOffsets: {},
         },
       });
     }
@@ -189,6 +226,67 @@ export default function Home() {
       void savePreference("watchHistory", nextHistory);
       return nextHistory;
     });
+  };
+
+  const persistScrollOffsets = (
+    updater: (current: Record<string, ScrollOffset>) => Record<string, ScrollOffset>,
+  ) => {
+    setSavedScrollOffsets((current) => {
+      const nextOffsets = updater(current);
+
+      if (nextOffsets === current) {
+        return current;
+      }
+
+      void savePreference("scrollOffsets", nextOffsets);
+      return nextOffsets;
+    });
+  };
+
+  const flushPendingScrollOffset = () => {
+    if (scrollPersistTimerRef.current !== null) {
+      window.clearTimeout(scrollPersistTimerRef.current);
+      scrollPersistTimerRef.current = null;
+    }
+
+    const path = pendingScrollPathRef.current;
+    const offset = pendingScrollOffsetRef.current;
+    pendingScrollPathRef.current = null;
+    pendingScrollOffsetRef.current = null;
+
+    if (!path || !offset) return;
+
+    persistScrollOffsets((current) => {
+      const previous = current[path];
+      if (previous && previous.x === offset.x && previous.y === offset.y) {
+        return current;
+      }
+
+      return {
+        ...current,
+        [path]: offset,
+      };
+    });
+  };
+
+  const scheduleScrollOffsetPersist = (path: string, offset: ScrollOffset) => {
+    if (
+      pendingScrollPathRef.current !== null &&
+      pendingScrollPathRef.current !== path
+    ) {
+      flushPendingScrollOffset();
+    }
+
+    pendingScrollPathRef.current = path;
+    pendingScrollOffsetRef.current = normalizeScrollOffset(offset);
+
+    if (scrollPersistTimerRef.current !== null) {
+      window.clearTimeout(scrollPersistTimerRef.current);
+    }
+
+    scrollPersistTimerRef.current = window.setTimeout(() => {
+      flushPendingScrollOffset();
+    }, SCROLL_OFFSET_SAVE_DELAY_MS);
   };
 
   const updateCurrentHooks = (
@@ -219,10 +317,12 @@ export default function Home() {
   };
 
   const handleLoadSelection = (result: PdfSelection, source: WatchSource) => {
+    flushPendingScrollOffset();
     setSelectedPdf(result);
     setPathInput(result.path);
     setStatusTone("live");
     setStatusText(watchSourceMessage(result, source));
+    setLastReloadedAt(null);
     setHistoryError(null);
     setIsSettingsOpen(false);
     void savePreference("watchPath", result.path);
@@ -254,6 +354,7 @@ export default function Home() {
       if (next.status === "updated") {
         setStatusTone("live");
         setStatusText(`${next.fileName} reloaded from disk.`);
+        setLastReloadedAt(new Date().toISOString());
         return;
       }
 
@@ -299,10 +400,11 @@ export default function Home() {
     const restorePreferences = async () => {
       try {
         const store = await getStore();
-        const [savedPath, savedZoom, savedHistory] = await Promise.all([
+        const [savedPath, savedZoom, savedHistory, storedScrollOffsets] = await Promise.all([
           store?.get<string>("watchPath"),
           store?.get<number>("zoom"),
           store?.get<WatchHistoryEntry[]>("watchHistory"),
+          store?.get<Record<string, ScrollOffset>>("scrollOffsets"),
         ]);
 
         if (cancelled) return;
@@ -324,6 +426,14 @@ export default function Home() {
         }));
 
         setWatchHistory(normalizedHistory);
+        setSavedScrollOffsets(
+          Object.fromEntries(
+            Object.entries(storedScrollOffsets ?? {}).map(([path, offset]) => [
+              path,
+              normalizeScrollOffset(offset),
+            ]),
+          ),
+        );
 
         if (savedPath) {
           setPathInput(savedPath);
@@ -368,6 +478,7 @@ export default function Home() {
 
     return () => {
       cancelled = true;
+      flushPendingScrollOffset();
       const store = storeRef.current;
       storeRef.current = null;
       void store?.close().catch(() => {});
@@ -565,7 +676,25 @@ export default function Home() {
   };
 
   const handleRemoveHistoryEntry = async (path: string) => {
+    if (pendingScrollPathRef.current === path) {
+      pendingScrollPathRef.current = null;
+      pendingScrollOffsetRef.current = null;
+      if (scrollPersistTimerRef.current !== null) {
+        window.clearTimeout(scrollPersistTimerRef.current);
+        scrollPersistTimerRef.current = null;
+      }
+    }
+
     persistHistory((current) => removeWatchHistoryEntry(current, path));
+    persistScrollOffsets((current) => {
+      if (!(path in current)) {
+        return current;
+      }
+
+      const nextOffsets = { ...current };
+      delete nextOffsets[path];
+      return nextOffsets;
+    });
     setHistoryStatuses((current) => {
       const next = { ...current };
       delete next[path];
@@ -638,6 +767,11 @@ export default function Home() {
           <div className="viewer-viewport">
             <PdfViewer
               src={viewerSrc}
+              initialScrollOffset={
+                selectedPdf
+                  ? savedScrollOffsets[selectedPdf.path] ?? ZERO_SCROLL_OFFSET
+                  : ZERO_SCROLL_OFFSET
+              }
               zoom={zoom}
               onLoadError={(error) => {
                 setStatusTone("error");
@@ -650,6 +784,10 @@ export default function Home() {
                   const clamped = clampZoom(nextZoom);
                   return Math.abs(current - clamped) < 0.001 ? current : clamped;
                 });
+              }}
+              onScrollChange={(offset) => {
+                if (!selectedPdf) return;
+                scheduleScrollOffsetPersist(selectedPdf.path, offset);
               }}
             />
           </div>
@@ -674,11 +812,8 @@ export default function Home() {
         )}
       </section>
 
-      <div className="viewer-badge panel">
-        <div className="viewer-badge__title">
-          {selectedPdf?.fileName || "No PDF selected"}
-        </div>
-        <div className="viewer-badge__meta">
+      <div className="status-bar panel" role="status" aria-live="polite">
+        <div className="status-bar__watch">
           <span
             className={[
               "status-pill",
@@ -695,8 +830,10 @@ export default function Home() {
                 ? "Attention"
                 : "Idle"}
           </span>
-          <span className="viewer-badge__message">{statusText}</span>
+          <span className="status-bar__message">{statusText}</span>
+          <span className="status-bar__timestamp">Last reload: {lastReloadLabel}</span>
         </div>
+        {isTauriClient ? <UpdateChecker /> : null}
       </div>
 
       <button

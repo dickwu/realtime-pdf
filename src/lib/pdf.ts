@@ -3,6 +3,12 @@ export const MIN_ZOOM = 0.6;
 export const MAX_ZOOM = 2;
 export const ZOOM_STEP = 0.1;
 export const DEFAULT_HOOK_EXECUTION_PATH = "~";
+export const ZERO_SCROLL_OFFSET = { x: 0, y: 0 } as const;
+
+export type ScrollOffset = {
+  x: number;
+  y: number;
+};
 
 export type WatchHook = {
   id: string;
@@ -38,6 +44,21 @@ export type HistoryPathStatus = {
   fileName: string;
   exists: boolean;
 };
+
+export function normalizeScrollOffset(
+  value?: Partial<ScrollOffset> | null,
+): ScrollOffset {
+  const x =
+    typeof value?.x === "number" && Number.isFinite(value.x)
+      ? value.x
+      : ZERO_SCROLL_OFFSET.x;
+  const y =
+    typeof value?.y === "number" && Number.isFinite(value.y)
+      ? value.y
+      : ZERO_SCROLL_OFFSET.y;
+
+  return { x, y };
+}
 
 export function appendRevision(url: string, revision: number): string {
   const [base, hash = ""] = url.split("#");

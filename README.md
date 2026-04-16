@@ -96,8 +96,8 @@ This repo ships with:
 Create a release by pushing a tag:
 
 ```bash
-git tag v0.1.0
-git push origin v0.1.0
+git tag v0.1.2
+git push origin v0.1.2
 ```
 
 The release workflow will:
@@ -117,4 +117,3 @@ The release workflow will:
 ## License
 
 MIT
-

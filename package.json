@@ -1,7 +1,7 @@
 {
   "name": "realtime-pdf",
   "private": true,
-  "version": "0.1.6",
+  "version": "0.1.7",
   "scripts": {
     "dev": "bun --bun next dev --turbopack",
     "dev:tauri": "bun scripts/tauri-before-dev.mjs",

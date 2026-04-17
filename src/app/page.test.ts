@@ -1,5 +1,5 @@
 import React from "react";
-import { act, cleanup, render, waitFor } from "@testing-library/react";
+import { act, cleanup, render, screen, waitFor } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import Home from "@/app/page";
 
@@ -65,6 +65,8 @@ vi.mock("@/components/PdfViewer", () => ({
 }));
 
 describe("Home scroll restoration", () => {
+  const initialLastModifiedMs = Date.parse("2026-04-17T12:34:56.000Z");
+
   beforeEach(() => {
     viewerPropsLog.length = 0;
 
@@ -78,6 +80,7 @@ describe("Home scroll restoration", () => {
           path: payload.path,
           fileName: "report.pdf",
           revision: 7,
+          lastModifiedMs: initialLastModifiedMs,
         });
       }
 
@@ -116,6 +119,20 @@ describe("Home scroll restoration", () => {
 
     await waitFor(() =>
       expect(viewerPropsLog.at(-1)?.initialScrollOffset).toEqual({ x: 12, y: 240 }),
+    );
+  });
+
+  it("shows the watched file modified time as the initial last reload label", async () => {
+    render(React.createElement(Home));
+
+    const expectedTimestamp = new Date(initialLastModifiedMs).toLocaleTimeString([], {
+      hour: "numeric",
+      minute: "2-digit",
+      second: "2-digit",
+    });
+
+    await waitFor(() =>
+      expect(screen.getByText(`Last reload: ${expectedTimestamp}`)).toBeTruthy(),
     );
   });
 

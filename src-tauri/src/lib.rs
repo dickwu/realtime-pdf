@@ -8,7 +8,7 @@ use std::{
         Arc, Mutex,
         atomic::{AtomicBool, AtomicU64, Ordering},
     },
-    time::{Duration, Instant},
+    time::{Duration, Instant, UNIX_EPOCH},
 };
 use tauri::{AppHandle, Emitter, Manager, State};
 use tauri_plugin_dialog::DialogExt;
@@ -38,6 +38,7 @@ struct PdfSelection {
     path: String,
     file_name: String,
     revision: u64,
+    last_modified_ms: Option<u64>,
 }
 
 #[derive(Clone, Serialize)]
@@ -247,10 +248,10 @@ async fn set_active_hooks(
                     }
                 };
 
-                if let Some(last) = *guard {
-                    if last.elapsed() < HOOK_DEBOUNCE_MS {
-                        return;
-                    }
+                if let Some(last) = *guard
+                    && last.elapsed() < HOOK_DEBOUNCE_MS
+                {
+                    return;
                 }
 
                 *guard = Some(Instant::now());
@@ -506,7 +507,14 @@ fn start_watcher(
         path: watched_file.to_string_lossy().into_owned(),
         file_name: file_name(&watched_file),
         revision,
+        last_modified_ms: last_modified_ms(&watched_file),
     })
+}
+
+fn last_modified_ms(path: &Path) -> Option<u64> {
+    let modified = fs::metadata(path).ok()?.modified().ok()?;
+    let duration = modified.duration_since(UNIX_EPOCH).ok()?;
+    u64::try_from(duration.as_millis()).ok()
 }
 
 fn event_targets_path(event: &Event, watched_file: &Path) -> bool {

@@ -1,6 +1,6 @@
 [package]
 name = "realtime-pdf"
-version = "0.1.6"
+version = "0.1.7"
 description = "Desktop PDF viewer that auto-reloads when the watched file changes"
 authors = ["gwddeveloper"]
 edition = "2024"

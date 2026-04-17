@@ -34,9 +34,10 @@ type PdfSelection = {
   path: string;
   fileName: string;
   revision: number;
+  lastModifiedMs: number | null;
 };
 
-type PdfWatchEvent = PdfSelection & {
+type PdfWatchEvent = Pick<PdfSelection, "path" | "fileName" | "revision"> & {
   status: "ready" | "updated" | "removed" | "error";
   message?: string | null;
 };
@@ -104,8 +105,8 @@ function hookStatusClassName(state: HookRuntimeState): string {
   return "is-idle";
 }
 
-function formatStatusTimestamp(value: string | null): string {
-  if (!value) return "Not reloaded yet";
+function formatStatusTimestamp(value: number | null): string {
+  if (value === null) return "Not reloaded yet";
 
   const parsed = new Date(value);
   if (Number.isNaN(parsed.getTime())) {
@@ -149,7 +150,7 @@ export default function Home() {
   const [statusText, setStatusText] = useState(
     "Pick a PDF or reopen a saved watch path to start watching it.",
   );
-  const [lastReloadedAt, setLastReloadedAt] = useState<string | null>(null);
+  const [lastReloadedAt, setLastReloadedAt] = useState<number | null>(null);
   const [statusTone, setStatusTone] = useState<"live" | "idle" | "error">(
     "idle",
   );
@@ -322,7 +323,7 @@ export default function Home() {
     setPathInput(result.path);
     setStatusTone("live");
     setStatusText(watchSourceMessage(result, source));
-    setLastReloadedAt(null);
+    setLastReloadedAt(result.lastModifiedMs);
     setHistoryError(null);
     setIsSettingsOpen(false);
     void savePreference("watchPath", result.path);
@@ -347,6 +348,7 @@ export default function Home() {
           path: next.path,
           fileName: next.fileName,
           revision: next.revision,
+          lastModifiedMs: current.lastModifiedMs,
         };
       });
       setPathInput(next.path);
@@ -354,7 +356,7 @@ export default function Home() {
       if (next.status === "updated") {
         setStatusTone("live");
         setStatusText(`${next.fileName} reloaded from disk.`);
-        setLastReloadedAt(new Date().toISOString());
+        setLastReloadedAt(Date.now());
         return;
       }
 

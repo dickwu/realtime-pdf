@@ -66,9 +66,12 @@ vi.mock("@/components/PdfViewer", () => ({
 
 describe("Home scroll restoration", () => {
   const initialLastModifiedMs = Date.parse("2026-04-17T12:34:56.000Z");
+  const fixedNowMs = initialLastModifiedMs + 38_000;
+  let dateNowSpy: ReturnType<typeof vi.spyOn> | null = null;
 
   beforeEach(() => {
     viewerPropsLog.length = 0;
+    dateNowSpy = vi.spyOn(Date, "now").mockReturnValue(fixedNowMs);
 
     listenMock.mockReset();
     listenMock.mockResolvedValue(() => {});
@@ -110,6 +113,8 @@ describe("Home scroll restoration", () => {
 
   afterEach(() => {
     vi.useRealTimers();
+    dateNowSpy?.mockRestore();
+    dateNowSpy = null;
     cleanup();
     vi.clearAllMocks();
   });
@@ -125,14 +130,8 @@ describe("Home scroll restoration", () => {
   it("shows the watched file modified time as the initial last reload label", async () => {
     render(React.createElement(Home));
 
-    const expectedTimestamp = new Date(initialLastModifiedMs).toLocaleTimeString([], {
-      hour: "numeric",
-      minute: "2-digit",
-      second: "2-digit",
-    });
-
     await waitFor(() =>
-      expect(screen.getByText(`Last reload: ${expectedTimestamp}`)).toBeTruthy(),
+      expect(screen.getByText("Last reload 38s ago")).toBeTruthy(),
     );
   });
 

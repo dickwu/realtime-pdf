@@ -134,29 +134,27 @@ export default function UpdateChecker() {
 
   if (shouldShowCompactVersion) {
     return (
-      <div className="update-checker update-checker--compact">
-        <span className="update-checker__version">v{state.currentVersion}</span>
+      <div className="rtpdf-update-checker">
+        <span className="rtpdf-update-checker__version">
+          v{state.currentVersion}
+        </span>
+        <button
+          className="rtpdf-update-checker__action"
+          disabled={state.checking}
+          onClick={() => void checkForUpdates(false)}
+          type="button"
+        >
+          {state.checking ? "Checking…" : "Check updates"}
+        </button>
       </div>
     );
   }
 
   return (
-    <div className="update-checker">
-      <span
-        className={[
-          "status-pill",
-          state.error
-            ? "is-error"
-            : state.available
-              ? "is-running"
-              : "is-idle",
-        ].join(" ")}
-      >
-        {state.available ? "Upgrade" : state.error ? "Update error" : "Version"}
-      </span>
-      <span className="update-checker__message">{status}</span>
+    <div className="rtpdf-update-checker">
+      <span className="rtpdf-update-checker__message">{status}</span>
       <button
-        className="update-checker__action"
+        className="rtpdf-update-checker__action"
         disabled={state.checking}
         onClick={() => {
           if (state.available) {
@@ -169,7 +167,7 @@ export default function UpdateChecker() {
         type="button"
       >
         {state.checking
-          ? "Checking..."
+          ? "Checking…"
           : state.available
             ? "Open release"
             : "Check updates"}

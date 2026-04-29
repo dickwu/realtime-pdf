@@ -25,8 +25,7 @@ Realtime PDF watches a target PDF file, reloads it when the file changes on disk
 ### Homebrew
 
 ```bash
-brew tap dickwu/tap
-brew install --cask realtime-pdf
+brew install --cask dickwu/tap/realtime-pdf
 ```
 
 ### If macOS says the app is damaged or cannot be opened

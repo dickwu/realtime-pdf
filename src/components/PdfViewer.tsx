@@ -341,7 +341,7 @@ export default function PdfViewer({
 
   if (loadError) {
     return (
-      <div className="viewer-error">
+      <div className="rtpdf-viewer-error">
         <h2>Unable to load PDF</h2>
         <p>{loadError.message}</p>
       </div>
@@ -349,44 +349,46 @@ export default function PdfViewer({
   }
 
   return (
-    <div className="viewer-canvas">
-      <EmbedPdfViewer
-        key={viewerKey}
-        ref={viewerRef}
-        className="embed-pdf-viewer"
-        config={{
-          src,
-          theme: { preference: "light" },
-          tabBar: "never",
-          disabledCategories: [
-            "panel",
-            "annotation",
-            "redaction",
-            "insert",
-            "form",
-            "document-open",
-            "document-export",
-            "document-print",
-            "document-capture",
-            "history",
-            "tools",
-            "menu",
-            "toolbar-menu",
-            "document-menu",
-          ],
-          zoom: {
-            defaultZoomLevel: clampedZoom,
-            minZoom: MIN_ZOOM,
-            maxZoom: MAX_ZOOM,
-          },
-          form: {
-            withForms: false,
-            withAnnotations: false,
-          },
-        }}
-        onReady={handleReady}
-        style={{ width: "100%", height: "100%" }}
-      />
-    </div>
+    <EmbedPdfViewer
+      key={viewerKey}
+      ref={viewerRef}
+      className="embed-pdf-viewer"
+      config={{
+        src,
+        theme: {
+          preference: "light",
+          light: { background: { app: "#8e8e93" } },
+          dark: { background: { app: "#16161a" } },
+        },
+        tabBar: "never",
+        disabledCategories: [
+          "panel",
+          "annotation",
+          "redaction",
+          "insert",
+          "form",
+          "document-open",
+          "document-export",
+          "document-print",
+          "document-capture",
+          "history",
+          "tools",
+          "menu",
+          "toolbar-menu",
+          "document-menu",
+        ],
+        zoom: {
+          defaultZoomLevel: clampedZoom,
+          minZoom: MIN_ZOOM,
+          maxZoom: MAX_ZOOM,
+        },
+        form: {
+          withForms: false,
+          withAnnotations: false,
+        },
+      }}
+      onReady={handleReady}
+      style={{ width: "100%", height: "100%" }}
+    />
   );
 }

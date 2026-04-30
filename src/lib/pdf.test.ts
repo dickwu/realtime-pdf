@@ -37,7 +37,7 @@ describe("clampZoom", () => {
   it("keeps zoom inside the supported range", () => {
     expect(clampZoom(0.3)).toBe(0.6);
     expect(clampZoom(1.25)).toBe(1.25);
-    expect(clampZoom(9)).toBe(2);
+    expect(clampZoom(9)).toBe(5);
   });
 
   it("falls back to the default zoom for invalid numbers", () => {

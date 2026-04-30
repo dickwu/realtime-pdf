@@ -25,7 +25,7 @@ export const LIGHT_THEME_VARS: ThemeVars = {
   "--menu-border": "rgba(0, 0, 0, 0.10)",
   "--row-active": "rgba(0, 0, 0, 0.05)",
   "--muted-bg": "rgba(0, 0, 0, 0.05)",
-  "--canvas-bg": "#e6e3df",
+  "--canvas-bg": "#8e8e93",
   "--dock-bg": "rgba(252, 252, 254, 0.82)",
   "--dock-border": "rgba(0, 0, 0, 0.10)",
   "--sheet-bg": "rgba(250, 250, 252, 0.96)",

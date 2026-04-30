@@ -868,7 +868,29 @@ export default function Home() {
     void handleSelectPdf();
   }, [handleSelectPdf]);
 
-  const ambientBottomOffset = hookDockExpanded ? 380 : 60;
+  const [dockHeight, setDockHeight] = useState(0);
+  const dockVisible = Boolean(currentHistoryEntry);
+
+  useEffect(() => {
+    if (!dockVisible) {
+      setDockHeight(0);
+      return;
+    }
+
+    const root = document.querySelector<HTMLElement>(
+      "[data-rtpdf-hook-dock]",
+    );
+    if (!root) return;
+
+    const update = () => setDockHeight(root.offsetHeight);
+    update();
+
+    const observer = new ResizeObserver(update);
+    observer.observe(root);
+    return () => observer.disconnect();
+  }, [dockVisible, hookDockExpanded]);
+
+  const ambientBottomOffset = dockVisible ? dockHeight + 24 : 24;
 
   return (
     <main

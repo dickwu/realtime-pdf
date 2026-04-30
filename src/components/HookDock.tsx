@@ -327,7 +327,7 @@ export default function HookDock({
   };
 
   return (
-    <div style={dockStyle}>
+    <div data-rtpdf-hook-dock="" style={dockStyle}>
       <button
         type="button"
         onClick={onToggleExpanded}

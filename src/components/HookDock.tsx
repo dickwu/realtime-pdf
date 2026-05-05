@@ -303,7 +303,9 @@ export default function HookDock({
 
   const counts = {
     running: states.filter((s) => s === "running").length,
-    watching: states.filter((s) => s === "watching").length,
+    watching: states.filter(
+      (s) => s === "watching" || s === "idle" || s === "success",
+    ).length,
     error: states.filter((s) => s === "error").length,
     disabled: states.filter((s) => s === "disabled").length,
   };

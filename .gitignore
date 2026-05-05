@@ -16,3 +16,6 @@ yarn.lock
 
 .omc/
 .claude/
+
+# Claude Code — personal, never commit
+CLAUDE.local.md

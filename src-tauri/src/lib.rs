@@ -621,6 +621,8 @@ pub fn run() {
         .manage(WatchState::default())
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_store::Builder::new().build())
+        .plugin(tauri_plugin_updater::Builder::new().build())
+        .plugin(tauri_plugin_process::init())
         .setup(|app| {
             if let Some(window) = app.get_webview_window("main") {
                 window.show().unwrap_or_default();

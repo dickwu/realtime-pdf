@@ -34,6 +34,8 @@ jobs:
       - uses: tauri-apps/tauri-action@v0.6.2
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
         with:
           tagName: ${{ github.ref_name }}
           releaseName: "Realtime PDF v__VERSION__"
@@ -41,7 +43,7 @@ jobs:
           releaseDraft: false
           prerelease: false
           generateReleaseNotes: true
-          args: --target ${{ matrix.target }} --bundles dmg --ci --no-sign
+          args: --target ${{ matrix.target }} --bundles app dmg --ci --no-sign
   update-homebrew-tap:
     needs: publish-tauri
     runs-on: macos-latest

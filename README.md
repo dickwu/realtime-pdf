@@ -54,6 +54,19 @@ For a Laravel-generated PDF, one hook might be:
 
 If that command regenerates the watched PDF file, Realtime PDF reloads it automatically through the existing PDF watcher.
 
+## In-app updates
+
+Realtime PDF checks GitHub Releases for a new version on launch and every five minutes after that. The result lands in `Settings → App version`:
+
+- **Up to date**: shows the current version and a `Check now` button.
+- **Update available**: shows `Update to vX.Y.Z` and a primary button. Clicking it downloads the signed update bundle, replaces the installed `.app`, and relaunches.
+
+Updates are signed with minisign at release time, so an update only installs if its signature matches the public key compiled into the running app.
+
+The first install of any version still happens via DMG download or `brew install --cask dickwu/tap/realtime-pdf`. In-app auto-update only kicks in once an updater-enabled build is running.
+
+If you installed via Homebrew and prefer to keep cask metadata in sync, you can also run `brew upgrade --cask realtime-pdf` instead of using the in-app updater — both paths work, but using one consistently avoids version drift between Homebrew's records and the installed binary.
+
 ## Development
 
 ### Prerequisites

@@ -252,6 +252,18 @@ select:focus {
   opacity: 0.6;
 }
 
+.rtpdf-update-checker__action--primary {
+  background: var(--accent);
+  color: #fff;
+  border-color: transparent;
+}
+
+.rtpdf-update-checker__meta {
+  color: var(--ink-faint);
+  font-size: 11px;
+  flex-basis: 100%;
+}
+
 .rtpdf-viewer-error {
   width: 100%;
   height: 100%;

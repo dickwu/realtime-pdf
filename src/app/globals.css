@@ -20,6 +20,22 @@ body {
   background: var(--win-bg, #fafafc);
   color: var(--ink, rgba(0, 0, 0, 0.88));
   overflow: hidden;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+input,
+textarea,
+select,
+[contenteditable="true"] {
+  -webkit-user-select: text;
+  user-select: text;
+}
+
+.embed-pdf-viewer,
+.embed-pdf-viewer * {
+  -webkit-user-select: text;
+  user-select: text;
 }
 
 body.rtpdf-dark {

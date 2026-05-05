@@ -340,7 +340,6 @@ export default function HookDock({
           alignItems: "center",
           gap: 10,
           cursor: "pointer",
-          userSelect: "none",
           background: "transparent",
           border: "none",
           color: "var(--ink)",

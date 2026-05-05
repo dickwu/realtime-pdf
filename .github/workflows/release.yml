@@ -43,7 +43,7 @@ jobs:
           releaseDraft: false
           prerelease: false
           generateReleaseNotes: true
-          args: --target ${{ matrix.target }} --bundles app dmg --ci --no-sign
+          args: --target ${{ matrix.target }} --bundles app dmg --ci
   update-homebrew-tap:
     needs: publish-tauri
     runs-on: macos-latest

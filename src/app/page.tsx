@@ -9,6 +9,7 @@ import {
 } from "react";
 import { convertFileSrc, invoke, isTauri } from "@tauri-apps/api/core";
 import { listen } from "@tauri-apps/api/event";
+import { getCurrentWebviewWindow } from "@tauri-apps/api/webviewWindow";
 import { LazyStore } from "@tauri-apps/plugin-store";
 import HookDock from "@/components/HookDock";
 import PdfViewer from "@/components/PdfViewer";
@@ -46,6 +47,7 @@ import {
 
 const PDF_WATCH_EVENT = "pdf-file-state";
 const HOOK_STATUS_EVENT = "hook-status";
+const HISTORY_PATH_EVENT = "history-path-status";
 const SETTINGS_STORE_PATH = "settings.json";
 const SCROLL_OFFSET_SAVE_DELAY_MS = 200;
 const RELOAD_TOAST_VISIBLE_MS = 2400;
@@ -577,33 +579,54 @@ export default function Home() {
     currentHistoryEntry?.hooks,
   ]);
 
+  const historyPathsKey = useMemo(
+    () => [...watchHistory.map((entry) => entry.path)].sort().join("\n"),
+    [watchHistory],
+  );
+
   useEffect(() => {
-    if (!isTauri() || watchHistory.length === 0) {
-      setHistoryStatuses({});
-      setHistoryError(null);
-      return;
-    }
+    if (!isTauri()) return;
+
+    const paths = watchHistory.map((entry) => entry.path);
 
     let cancelled = false;
+    let unlisten: (() => void) | undefined;
 
-    const refreshHistoryStatuses = async () => {
+    const run = async () => {
       setIsCheckingHistory(true);
       setHistoryError(null);
 
       try {
-        const results = await invoke<HistoryPathStatus[]>(
-          "check_history_paths",
-          {
-            paths: watchHistory.map((entry) => entry.path),
-            requirePdf: true,
+        unlisten = await listen<HistoryPathStatus>(
+          HISTORY_PATH_EVENT,
+          (event) => {
+            if (cancelled) return;
+            const { path, fileName, exists } = event.payload;
+            setHistoryStatuses((current) => {
+              const previous = current[path];
+              if (previous && previous.exists === exists) return current;
+              return {
+                ...current,
+                [path]: { path, fileName, exists },
+              };
+            });
           },
         );
 
-        if (cancelled) return;
+        if (cancelled) {
+          void unlisten();
+          return;
+        }
 
-        setHistoryStatuses(
-          Object.fromEntries(results.map((entry) => [entry.path, entry])),
-        );
+        if (paths.length === 0) {
+          await invoke("set_history_watchers", { paths: [] });
+          if (!cancelled) {
+            setHistoryStatuses({});
+          }
+          return;
+        }
+
+        await invoke("set_history_watchers", { paths });
       } catch (error) {
         if (cancelled) return;
         setHistoryError(
@@ -616,12 +639,58 @@ export default function Home() {
       }
     };
 
-    void refreshHistoryStatuses();
+    void run();
 
     return () => {
       cancelled = true;
+      void unlisten?.();
     };
-  }, [watchHistory]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [historyPathsKey]);
+
+  useEffect(() => {
+    if (!isTauri()) return;
+    if (!recentsOpen && !isSettingsOpen) return;
+    if (watchHistory.length === 0) return;
+
+    const paths = watchHistory.map((entry) => entry.path);
+    void invoke("set_history_watchers", { paths }).catch(() => {});
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [recentsOpen, isSettingsOpen, historyPathsKey]);
+
+  useEffect(() => {
+    if (!isTauri()) return;
+
+    let cancelled = false;
+    let unlisten: (() => void) | undefined;
+
+    const attach = async () => {
+      try {
+        unlisten = await getCurrentWebviewWindow().listen<unknown>(
+          "tauri://focus",
+          () => {
+            if (cancelled) return;
+            const paths = watchHistory.map((entry) => entry.path);
+            if (paths.length === 0) return;
+            void invoke("set_history_watchers", { paths }).catch(() => {});
+          },
+        );
+        if (cancelled) {
+          void unlisten();
+        }
+      } catch {
+        // Window focus event unavailable in this runtime; skip silently.
+      }
+    };
+
+    void attach();
+
+    return () => {
+      cancelled = true;
+      void unlisten?.();
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [historyPathsKey]);
 
   useEffect(() => {
     if (!isTauri()) return;

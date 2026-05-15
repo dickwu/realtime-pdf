@@ -4,6 +4,7 @@ export const MAX_ZOOM = 5;
 export const ZOOM_STEP = 0.1;
 export const DEFAULT_HOOK_EXECUTION_PATH = "~";
 export const ZERO_SCROLL_OFFSET = { x: 0, y: 0 } as const;
+export const MAX_WATCH_HISTORY = 50;
 
 export type ScrollOffset = {
   x: number;
@@ -87,10 +88,11 @@ export function upsertWatchHistoryEntry(
   history: WatchHistoryEntry[],
   nextEntry: WatchHistoryEntry,
 ): WatchHistoryEntry[] {
-  return [
+  const merged = [
     nextEntry,
     ...history.filter((entry) => entry.path !== nextEntry.path),
   ];
+  return merged.slice(0, MAX_WATCH_HISTORY);
 }
 
 export function removeWatchHistoryEntry(

@@ -109,6 +109,7 @@ export default function Home() {
   const pendingScrollPathRef = useRef<string | null>(null);
   const pendingScrollOffsetRef = useRef<ScrollOffset | null>(null);
   const reloadToastTimerRef = useRef<number | null>(null);
+  const settingsAutoOpenedRef = useRef(false);
 
   const [selectedPdf, setSelectedPdf] = useState<PdfSelection | null>(null);
   const [isTauriClient, setIsTauriClient] = useState(false);
@@ -353,6 +354,18 @@ export default function Home() {
     }, RELOAD_TOAST_VISIBLE_MS);
   }, []);
 
+  // Opening settings on purpose clears the auto-open flag so a later
+  // "PDF is back" event will not yank a deliberately-open sheet shut.
+  const openSettings = useCallback(() => {
+    settingsAutoOpenedRef.current = false;
+    setIsSettingsOpen(true);
+  }, []);
+
+  const closeSettings = useCallback(() => {
+    settingsAutoOpenedRef.current = false;
+    setIsSettingsOpen(false);
+  }, []);
+
   const handleLoadSelection = useCallback(
     (result: PdfSelection, source: WatchSource) => {
       flushPendingScrollOffset();
@@ -362,6 +375,7 @@ export default function Home() {
       setStatusText(watchSourceMessage(result, source));
       setLastReloadedAt(result.lastModifiedMs);
       setHistoryError(null);
+      settingsAutoOpenedRef.current = false;
       setIsSettingsOpen(false);
       setRecentsOpen(false);
       void savePreference("watchPath", result.path);
@@ -395,6 +409,12 @@ export default function Home() {
         setStatusText(`${next.fileName} reloaded from disk.`);
         setLastReloadedAt(Date.now());
         showReloadToast();
+        // The watched PDF is available again: auto-hide the settings sheet
+        // if it was force-opened by a prior missing/error event.
+        if (settingsAutoOpenedRef.current) {
+          settingsAutoOpenedRef.current = false;
+          setIsSettingsOpen(false);
+        }
         return;
       }
 
@@ -404,6 +424,7 @@ export default function Home() {
           next.message ||
             `${next.fileName} is missing. Restore the file to reload it.`,
         );
+        settingsAutoOpenedRef.current = true;
         setIsSettingsOpen(true);
         return;
       }
@@ -411,6 +432,7 @@ export default function Home() {
       if (next.status === "error") {
         setStatusTone("error");
         setStatusText(next.message || "The file watcher reported an error.");
+        settingsAutoOpenedRef.current = true;
         setIsSettingsOpen(true);
       }
     }).then((cleanup) => {
@@ -501,6 +523,7 @@ export default function Home() {
                 ? error.message
                 : "Unable to restore the saved PDF path.",
             );
+            settingsAutoOpenedRef.current = true;
             setIsSettingsOpen(true);
           }
         }
@@ -856,8 +879,8 @@ export default function Home() {
 
   const handleAddHook = useCallback(() => {
     updateCurrentHooks((current) => [...current, createEmptyHook()]);
-    setIsSettingsOpen(true);
-  }, [updateCurrentHooks]);
+    openSettings();
+  }, [updateCurrentHooks, openSettings]);
 
   const handleUpdateHook = useCallback(
     (hookId: string, patch: Partial<WatchHook>) => {
@@ -982,7 +1005,7 @@ export default function Home() {
         statusLabel={statusLabel}
         theme={theme}
         onToggleTheme={handleToggleTheme}
-        onOpenSettings={() => setIsSettingsOpen(true)}
+        onOpenSettings={openSettings}
         recentsSlot={
           <RecentsDropdown
             open={recentsOpen}
@@ -1041,7 +1064,7 @@ export default function Home() {
               </p>
               <button
                 className="rtpdf-empty__cta"
-                onClick={() => setIsSettingsOpen(true)}
+                onClick={openSettings}
                 type="button"
               >
                 Open settings
@@ -1075,13 +1098,13 @@ export default function Home() {
           onToggleExpanded={handleToggleHookDock}
           onToggleHook={handleToggleHook}
           onAddHook={handleAddHook}
-          onOpenSettings={() => setIsSettingsOpen(true)}
+          onOpenSettings={openSettings}
         />
       </div>
 
       <SettingsSheet
         open={isSettingsOpen}
-        onClose={() => setIsSettingsOpen(false)}
+        onClose={closeSettings}
         selectedPdf={
           selectedPdf
             ? { path: selectedPdf.path, fileName: selectedPdf.fileName }

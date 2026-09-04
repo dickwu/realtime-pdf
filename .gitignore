@@ -15,9 +15,13 @@ package-lock.json
 yarn.lock
 
 .omc/
-.claude/
+.claude/*
+!.claude/skills/
+!.claude/hooks/
+!.claude/settings.json
 
 # Claude Code — personal, never commit
 CLAUDE.local.md
 
 .tauri-key/
+.gstack/

@@ -325,7 +325,8 @@ type ToolbarProps = {
   statusLabel: string;
   theme: Theme;
   onToggleTheme: () => void;
-  onOpenSettings: () => void;
+  settingsOpen: boolean;
+  onToggleSettings: () => void;
   recentsSlot: ReactNode;
 };
 
@@ -344,7 +345,8 @@ export default function Toolbar({
   statusLabel,
   theme,
   onToggleTheme,
-  onOpenSettings,
+  settingsOpen,
+  onToggleSettings,
   recentsSlot,
 }: ToolbarProps) {
   const dark = theme === "dark";
@@ -444,7 +446,12 @@ export default function Toolbar({
         {dark ? <SunIcon /> : <MoonIcon />}
       </ToolbarButton>
 
-      <ToolbarButton onClick={onOpenSettings} title="Settings">
+      <ToolbarButton
+        onClick={onToggleSettings}
+        active={settingsOpen}
+        ariaExpanded={settingsOpen}
+        title="Settings"
+      >
         <GearIcon />
       </ToolbarButton>
     </div>

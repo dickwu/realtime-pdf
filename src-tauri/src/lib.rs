@@ -580,6 +580,10 @@ fn prepare_pdf_path(path: PathBuf) -> Result<PathBuf, String> {
 }
 
 fn resolve_hook_watch_target(raw_path: &str) -> Result<PathBuf, String> {
+    if raw_path.trim().is_empty() {
+        return Err("Enter a file to watch.".to_string());
+    }
+
     let parsed_path = parse_input_path(raw_path)?;
     let resolved_path = fs::canonicalize(&parsed_path)
         .map_err(|_| format!("Hook path not found at {}.", parsed_path.display()))?;
@@ -882,6 +886,26 @@ mod tests {
     fn classify_paths_returns_empty_for_empty_input() {
         let out = classify_paths(&[]);
         assert!(out.is_empty());
+    }
+
+    #[test]
+    fn resolve_hook_watch_target_names_the_source_when_empty() {
+        assert_eq!(
+            resolve_hook_watch_target(""),
+            Err("Enter a file to watch.".to_string())
+        );
+        assert_eq!(
+            resolve_hook_watch_target("   "),
+            Err("Enter a file to watch.".to_string())
+        );
+    }
+
+    #[test]
+    fn resolve_hook_watch_target_reports_missing_file() {
+        let dir = tempdir_in_tmp();
+        let missing = dir.path().join("absent.blade.php");
+        let error = resolve_hook_watch_target(&missing.to_string_lossy()).unwrap_err();
+        assert!(error.starts_with("Hook path not found at "), "{error}");
     }
 
     #[test]

@@ -365,8 +365,12 @@ export default function Home() {
       setStatusText(watchSourceMessage(result, source));
       setLastReloadedAt(result.lastModifiedMs);
       setHistoryError(null);
-      settingsAutoOpenedRef.current = false;
-      setIsSettingsOpen(false);
+      // The inspector sits beside the PDF, so a deliberately opened one stays
+      // open for hook setup; only a sheet forced open by an outage closes.
+      if (settingsAutoOpenedRef.current) {
+        settingsAutoOpenedRef.current = false;
+        setIsSettingsOpen(false);
+      }
       setRecentsOpen(false);
       void savePreference("watchPath", result.path);
       upsertHistory(result);
@@ -990,7 +994,8 @@ export default function Home() {
         statusLabel={statusLabel}
         theme={theme}
         onToggleTheme={handleToggleTheme}
-        onOpenSettings={openSettings}
+        settingsOpen={isSettingsOpen}
+        onToggleSettings={isSettingsOpen ? closeSettings : openSettings}
         recentsSlot={
           <RecentsDropdown
             open={recentsOpen}
@@ -1006,121 +1011,126 @@ export default function Home() {
       />
 
       <div className="rtpdf-canvas">
-        {viewerSrc ? (
-          <div className="rtpdf-canvas__viewer">
-            <PdfViewer
-              src={viewerSrc}
-              initialScrollOffset={
-                selectedPdf
-                  ? (savedScrollOffsets[selectedPdf.path] ?? ZERO_SCROLL_OFFSET)
-                  : ZERO_SCROLL_OFFSET
-              }
-              zoom={zoom}
-              onLoadError={(error) => {
-                setStatusTone("error");
-                setStatusText(
-                  error.message ||
-                    "The PDF viewer could not load the selected file.",
-                );
-              }}
-              onZoomChange={(nextZoom) => {
-                setZoom((current) => {
-                  const clamped = clampZoom(nextZoom);
-                  return Math.abs(current - clamped) < 0.001
-                    ? current
-                    : clamped;
-                });
-              }}
-              onScrollChange={(offset) => {
-                if (!selectedPdf) return;
-                scheduleScrollOffsetPersist(selectedPdf.path, offset);
-              }}
-            />
-          </div>
-        ) : (
-          <div className="rtpdf-empty">
-            <div className="rtpdf-empty__card">
-              <span className="rtpdf-eyebrow">Realtime PDF</span>
-              <h1>Open one watched PDF.</h1>
-              <p>
-                Pick a file or paste an absolute path. The app restores your
-                last watched PDF on reopen and runs per-PDF source hooks when
-                their watch paths change.
-              </p>
-              <button
-                className="rtpdf-empty__cta"
-                onClick={openSettings}
-                type="button"
-              >
-                Open settings
-              </button>
+        <div className="rtpdf-stage">
+          {viewerSrc ? (
+            <div className="rtpdf-canvas__viewer">
+              <PdfViewer
+                src={viewerSrc}
+                initialScrollOffset={
+                  selectedPdf
+                    ? (savedScrollOffsets[selectedPdf.path] ??
+                      ZERO_SCROLL_OFFSET)
+                    : ZERO_SCROLL_OFFSET
+                }
+                zoom={zoom}
+                onLoadError={(error) => {
+                  setStatusTone("error");
+                  setStatusText(
+                    error.message ||
+                      "The PDF viewer could not load the selected file.",
+                  );
+                }}
+                onZoomChange={(nextZoom) => {
+                  setZoom((current) => {
+                    const clamped = clampZoom(nextZoom);
+                    return Math.abs(current - clamped) < 0.001
+                      ? current
+                      : clamped;
+                  });
+                }}
+                onScrollChange={(offset) => {
+                  if (!selectedPdf) return;
+                  scheduleScrollOffsetPersist(selectedPdf.path, offset);
+                }}
+              />
             </div>
-          </div>
-        )}
+          ) : (
+            <div className="rtpdf-empty">
+              <div className="rtpdf-empty__card">
+                <span className="rtpdf-eyebrow">Realtime PDF</span>
+                <h1>Open one watched PDF.</h1>
+                <p>
+                  Pick a file or paste an absolute path. The app restores your
+                  last watched PDF on reopen and runs per-PDF source hooks when
+                  their watch paths change.
+                </p>
+                <button
+                  className="rtpdf-empty__cta"
+                  onClick={openSettings}
+                  type="button"
+                >
+                  Open settings
+                </button>
+              </div>
+            </div>
+          )}
 
-        <ReloadToast
-          visible={reloadToastVisible}
-          fileName={selectedPdf?.fileName ?? null}
-        />
+          <ReloadToast
+            visible={reloadToastVisible}
+            fileName={selectedPdf?.fileName ?? null}
+          />
 
-        <AmbientReloadIndicator
-          label={reloadAgoLabel}
-          bottomOffset={ambientBottomOffset}
-          tone={
-            statusTone === "error"
-              ? "error"
-              : statusTone === "live"
-                ? "live"
-                : "idle"
+          <AmbientReloadIndicator
+            label={reloadAgoLabel}
+            bottomOffset={ambientBottomOffset}
+            tone={
+              statusTone === "error"
+                ? "error"
+                : statusTone === "live"
+                  ? "live"
+                  : "idle"
+            }
+          />
+
+          <HookDock
+            visible={Boolean(currentHistoryEntry)}
+            hooks={currentHistoryEntry?.hooks ?? []}
+            hookStatuses={hookStatuses}
+            expanded={hookDockExpanded}
+            onToggleExpanded={handleToggleHookDock}
+            onToggleHook={handleToggleHook}
+            onAddHook={handleAddHook}
+            onOpenSettings={openSettings}
+          />
+        </div>
+
+        <SettingsSheet
+          open={isSettingsOpen}
+          onClose={closeSettings}
+          selectedPdf={
+            selectedPdf
+              ? { path: selectedPdf.path, fileName: selectedPdf.fileName }
+              : null
           }
-        />
-
-        <HookDock
-          visible={Boolean(currentHistoryEntry)}
-          hooks={currentHistoryEntry?.hooks ?? []}
-          hookStatuses={hookStatuses}
-          expanded={hookDockExpanded}
-          onToggleExpanded={handleToggleHookDock}
-          onToggleHook={handleToggleHook}
+          watchTone={statusTone}
+          watchMessage={statusText}
+          pathInput={pathInput}
+          onPathInputChange={setPathInput}
+          onPickPdf={handleSelectPdf}
+          onPathSubmit={handlePathSubmit}
+          isPicking={isPicking}
+          isWatchingPath={isWatchingPath}
+          watchHistory={watchHistory}
+          historyStatuses={historyStatuses}
+          isCheckingHistory={isCheckingHistory}
+          historyError={historyError}
+          onSelectHistory={(path) => void handleSelectHistoryEntry(path)}
+          onRemoveHistory={(path) => void handleRemoveHistoryEntry(path)}
+          currentHistoryEntry={currentHistoryEntry}
+          templateCandidates={templateCandidates}
+          copySourcePath={copySourcePath}
+          onCopySourceChange={setCopySourcePath}
+          onCopyHooks={handleCopyHooksFromTemplate}
           onAddHook={handleAddHook}
-          onOpenSettings={openSettings}
+          onUpdateHook={handleUpdateHook}
+          onRemoveHook={handleRemoveHook}
+          onToggleHook={handleToggleHook}
+          hookStatuses={hookStatuses}
+          hookPathStatuses={hookPathStatuses}
+          nowMs={tickNow}
+          updateCheckerSlot={isTauriClient ? <UpdateChecker /> : null}
         />
       </div>
-
-      <SettingsSheet
-        open={isSettingsOpen}
-        onClose={closeSettings}
-        selectedPdf={
-          selectedPdf
-            ? { path: selectedPdf.path, fileName: selectedPdf.fileName }
-            : null
-        }
-        pathInput={pathInput}
-        onPathInputChange={setPathInput}
-        onPickPdf={handleSelectPdf}
-        onPathSubmit={handlePathSubmit}
-        isPicking={isPicking}
-        isWatchingPath={isWatchingPath}
-        watchHistory={watchHistory}
-        historyStatuses={historyStatuses}
-        isCheckingHistory={isCheckingHistory}
-        historyError={historyError}
-        onSelectHistory={(path) => void handleSelectHistoryEntry(path)}
-        onRemoveHistory={(path) => void handleRemoveHistoryEntry(path)}
-        currentHistoryEntry={currentHistoryEntry}
-        templateCandidates={templateCandidates}
-        copySourcePath={copySourcePath}
-        onCopySourceChange={setCopySourcePath}
-        onCopyHooks={handleCopyHooksFromTemplate}
-        onAddHook={handleAddHook}
-        onUpdateHook={handleUpdateHook}
-        onRemoveHook={handleRemoveHook}
-        onToggleHook={handleToggleHook}
-        hookStatuses={hookStatuses}
-        hookPathStatuses={hookPathStatuses}
-        nowMs={tickNow}
-        updateCheckerSlot={isTauriClient ? <UpdateChecker /> : null}
-      />
 
       <span aria-live="polite" className="rtpdf-sr-only">
         {statusText}

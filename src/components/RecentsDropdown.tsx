@@ -2,10 +2,7 @@
 
 import { type CSSProperties, useEffect } from "react";
 import { BoltIcon, PlusIcon } from "@/components/Icons";
-import {
-  formatLastOpenedRelative,
-  shrinkPath,
-} from "@/lib/theme";
+import { formatLastOpenedRelative, shrinkPath } from "@/lib/theme";
 import type { HistoryPathStatus, WatchHistoryEntry } from "@/lib/pdf";
 
 const ROW_BASE_STYLE: CSSProperties = {
@@ -220,9 +217,7 @@ export default function RecentsDropdown({
                       flexShrink: 0,
                     }}
                   >
-                    <span
-                      style={{ fontSize: 10.5, color: "var(--ink-muted)" }}
-                    >
+                    <span style={{ fontSize: 10.5, color: "var(--ink-muted)" }}>
                       {formatLastOpenedRelative(entry.lastOpenedAt, nowMs)}
                     </span>
                     {entry.hooks.length > 0 ? (

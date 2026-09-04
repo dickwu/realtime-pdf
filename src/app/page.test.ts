@@ -84,22 +84,27 @@ describe("Home scroll restoration", () => {
     listenMock.mockResolvedValue(() => {});
 
     invokeMock.mockReset();
-    invokeMock.mockImplementation((command: string, payload: { path: string }) => {
-      if (command === "watch_pdf_path") {
-        return Promise.resolve({
-          path: payload.path,
-          fileName: "report.pdf",
-          revision: 7,
-          lastModifiedMs: initialLastModifiedMs,
-        });
-      }
+    invokeMock.mockImplementation(
+      (command: string, payload: { path: string }) => {
+        if (command === "watch_pdf_path") {
+          return Promise.resolve({
+            path: payload.path,
+            fileName: "report.pdf",
+            revision: 7,
+            lastModifiedMs: initialLastModifiedMs,
+          });
+        }
 
-      if (command === "check_history_paths" || command === "set_active_hooks") {
-        return Promise.resolve([]);
-      }
+        if (
+          command === "check_history_paths" ||
+          command === "set_active_hooks"
+        ) {
+          return Promise.resolve([]);
+        }
 
-      return Promise.reject(new Error(`Unhandled command: ${command}`));
-    });
+        return Promise.reject(new Error(`Unhandled command: ${command}`));
+      },
+    );
 
     storeGetMock.mockReset();
     storeGetMock.mockImplementation((key: string) => {
@@ -130,7 +135,10 @@ describe("Home scroll restoration", () => {
     render(React.createElement(Home));
 
     await waitFor(() =>
-      expect(viewerPropsLog.at(-1)?.initialScrollOffset).toEqual({ x: 12, y: 240 }),
+      expect(viewerPropsLog.at(-1)?.initialScrollOffset).toEqual({
+        x: 12,
+        y: 240,
+      }),
     );
   });
 
@@ -202,21 +210,26 @@ describe("Home settings auto-hide on PDF availability", () => {
     );
 
     invokeMock.mockReset();
-    invokeMock.mockImplementation((command: string, payload: { path: string }) => {
-      if (command === "watch_pdf_path") {
-        return Promise.resolve({
-          path: payload.path,
-          fileName: "report.pdf",
-          revision: 7,
-          lastModifiedMs: initialLastModifiedMs,
-        });
-      }
-      if (command === "check_history_paths") return Promise.resolve([]);
-      if (command === "set_active_hooks" || command === "set_history_watchers") {
-        return Promise.resolve(undefined);
-      }
-      return Promise.reject(new Error(`Unhandled command: ${command}`));
-    });
+    invokeMock.mockImplementation(
+      (command: string, payload: { path: string }) => {
+        if (command === "watch_pdf_path") {
+          return Promise.resolve({
+            path: payload.path,
+            fileName: "report.pdf",
+            revision: 7,
+            lastModifiedMs: initialLastModifiedMs,
+          });
+        }
+        if (command === "check_history_paths") return Promise.resolve([]);
+        if (
+          command === "set_active_hooks" ||
+          command === "set_history_watchers"
+        ) {
+          return Promise.resolve(undefined);
+        }
+        return Promise.reject(new Error(`Unhandled command: ${command}`));
+      },
+    );
 
     storeGetMock.mockReset();
     storeGetMock.mockImplementation((key: string) => {

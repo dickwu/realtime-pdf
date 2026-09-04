@@ -94,9 +94,7 @@ function HookRow({ hook, state, onToggle }: HookRowProps) {
         padding: "8px 10px",
         borderRadius: 8,
         background: hover ? "var(--btn-hover)" : "transparent",
-        borderLeft: `2px solid ${
-          enabled ? "var(--accent)" : "transparent"
-        }`,
+        borderLeft: `2px solid ${enabled ? "var(--accent)" : "transparent"}`,
         opacity: enabled ? 1 : 0.6,
       }}
     >
@@ -135,7 +133,9 @@ function HookRow({ hook, state, onToggle }: HookRowProps) {
               "ui-monospace, 'SF Mono', 'JetBrains Mono', Menlo, monospace",
           }}
         >
-          {hook.command || <span style={{ color: "var(--ink-muted)" }}>(no command)</span>}
+          {hook.command || (
+            <span style={{ color: "var(--ink-muted)" }}>(no command)</span>
+          )}
         </div>
         <div
           style={{
@@ -393,11 +393,7 @@ export default function HookDock({
           {counts.running > 0 ? (
             <CountChip label="running" count={counts.running} tone="running" />
           ) : null}
-          <CountChip
-            label="watching"
-            count={counts.watching}
-            tone="live"
-          />
+          <CountChip label="watching" count={counts.watching} tone="live" />
           {counts.error > 0 ? (
             <CountChip label="failing" count={counts.error} tone="error" />
           ) : null}

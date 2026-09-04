@@ -1,5 +1,11 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
+import {
+  cleanup,
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+} from "@testing-library/react";
 
 vi.mock("@tauri-apps/api/app", () => ({
   getVersion: vi.fn(() => Promise.resolve("0.1.10")),
@@ -40,7 +46,9 @@ describe("UpdateChecker", () => {
 
   it("transitions to 'Update to v<version>' and triggers downloadAndInstall + relaunch on click", async () => {
     const downloadAndInstall = vi.fn(
-      async (cb?: (e: { event: string; data?: Record<string, number> }) => void) => {
+      async (
+        cb?: (e: { event: string; data?: Record<string, number> }) => void,
+      ) => {
         cb?.({ event: "Started", data: { contentLength: 1024 } });
         cb?.({ event: "Progress", data: { chunkLength: 1024 } });
         cb?.({ event: "Finished" });

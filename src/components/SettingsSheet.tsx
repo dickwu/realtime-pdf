@@ -7,15 +7,8 @@ import {
   useEffect,
   useState,
 } from "react";
-import {
-  CloseIcon,
-  PlusIcon,
-  TrashIcon,
-} from "@/components/Icons";
-import {
-  formatLastOpenedRelative,
-  shrinkPath,
-} from "@/lib/theme";
+import { CloseIcon, PlusIcon, TrashIcon } from "@/components/Icons";
+import { formatLastOpenedRelative, shrinkPath } from "@/lib/theme";
 import type {
   HistoryPathStatus,
   HookRuntimeState,
@@ -24,10 +17,7 @@ import type {
   WatchHook,
 } from "@/lib/pdf";
 
-const PILL_TONE: Record<
-  HookRuntimeState,
-  { bg: string; fg: string }
-> = {
+const PILL_TONE: Record<HookRuntimeState, { bg: string; fg: string }> = {
   watching: { bg: "var(--success-soft)", fg: "var(--success)" },
   running: { bg: "var(--warning-soft)", fg: "var(--warning)" },
   success: { bg: "var(--success-soft)", fg: "var(--success)" },
@@ -237,7 +227,9 @@ export default function SettingsSheet({
               title="Watched PDF"
               subtitle="Pick a file or paste an absolute path."
             >
-              <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+              <div
+                style={{ display: "flex", flexDirection: "column", gap: 10 }}
+              >
                 <button
                   type="button"
                   onClick={onPickPdf}
@@ -435,7 +427,9 @@ export default function SettingsSheet({
                   No saved history yet. Successfully watched files appear here.
                 </EmptyHint>
               ) : (
-                <div style={{ display: "flex", flexDirection: "column", gap: 1 }}>
+                <div
+                  style={{ display: "flex", flexDirection: "column", gap: 1 }}
+                >
                   {watchHistory.map((entry) => (
                     <HistoryRow
                       key={entry.path}
@@ -472,8 +466,7 @@ function inputStyle(): React.CSSProperties {
     color: "var(--ink)",
     fontSize: 12,
     outline: "none",
-    fontFamily:
-      "ui-monospace, 'SF Mono', 'JetBrains Mono', Menlo, monospace",
+    fontFamily: "ui-monospace, 'SF Mono', 'JetBrains Mono', Menlo, monospace",
   };
 }
 
@@ -495,8 +488,7 @@ function codeStyle(): React.CSSProperties {
     padding: "1px 5px",
     borderRadius: 5,
     background: "var(--muted-bg)",
-    fontFamily:
-      "ui-monospace, 'SF Mono', 'JetBrains Mono', Menlo, monospace",
+    fontFamily: "ui-monospace, 'SF Mono', 'JetBrains Mono', Menlo, monospace",
     fontSize: 11,
   };
 }
@@ -623,7 +615,9 @@ function HookEditor({
           borderBottom: "0.5px solid var(--pill-border)",
         }}
       >
-        <span style={{ fontSize: 11, color: "var(--ink-muted)", fontWeight: 600 }}>
+        <span
+          style={{ fontSize: 11, color: "var(--ink-muted)", fontWeight: 600 }}
+        >
           Hook {index}
         </span>
         <span
@@ -761,13 +755,7 @@ function HookEditor({
   );
 }
 
-function Field({
-  label,
-  children,
-}: {
-  label: string;
-  children: ReactNode;
-}) {
+function Field({ label, children }: { label: string; children: ReactNode }) {
   return (
     <label style={{ display: "flex", flexDirection: "column", gap: 4 }}>
       <span
@@ -824,8 +812,7 @@ function HistoryRow({
         padding: "8px 10px",
         borderRadius: 7,
         cursor: interactive ? "pointer" : "default",
-        background:
-          hover && interactive ? "var(--btn-hover)" : "transparent",
+        background: hover && interactive ? "var(--btn-hover)" : "transparent",
         opacity: exists ? 1 : 0.55,
       }}
     >

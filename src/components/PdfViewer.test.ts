@@ -9,71 +9,86 @@ const viewerLifecycle = {
   unmounts: 0,
 };
 
-type DocumentOpenedListener = ((document: { id?: string; pageCount?: number }) => void) | null;
+type DocumentOpenedListener =
+  | ((document: { id?: string; pageCount?: number }) => void)
+  | null;
 type ZoomChangeListener = ((event: { newZoom: number }) => void) | null;
 type ViewportResizeListener =
   | ((event: { metrics: { width: number; height: number } }) => void)
   | null;
 type ScrollListener =
-  | ((event: { documentId: string; metrics: { scrollOffset: { x: number; y: number } } }) => void)
+  | ((event: {
+      documentId: string;
+      metrics: { scrollOffset: { x: number; y: number } };
+    }) => void)
   | null;
 
 const zoomCapability = {
   requestZoom: vi.fn<(level: number) => void>(),
-  onZoomChange: vi.fn<(listener: (event: { newZoom: number }) => void) => () => void>(),
+  onZoomChange:
+    vi.fn<(listener: (event: { newZoom: number }) => void) => () => void>(),
 };
 
 const documentManager = {
-  onDocumentOpened: vi.fn<
-    (listener: (document: { pageCount?: number }) => void) => () => void
-  >(),
-  onDocumentError: vi.fn<
-    (
-      listener: (event: { error?: Error; message?: string }) => void,
-    ) => () => void
-  >(),
+  onDocumentOpened:
+    vi.fn<
+      (listener: (document: { pageCount?: number }) => void) => () => void
+    >(),
+  onDocumentError:
+    vi.fn<
+      (
+        listener: (event: { error?: Error; message?: string }) => void,
+      ) => () => void
+    >(),
 };
 
 const viewportCapability = {
   getMetrics: vi.fn<() => { width: number; height: number }>(),
-  forDocument: vi.fn<(documentId: string) => { scrollTo: (position: { x: number; y: number; behavior?: string }) => void }>(),
-  onViewportResize: vi.fn<
-    (
-      listener: (event: { metrics: { width: number; height: number } }) => void,
-    ) => () => void
+  forDocument: vi.fn<
+    (documentId: string) => {
+      scrollTo: (position: { x: number; y: number; behavior?: string }) => void;
+    }
   >(),
+  onViewportResize:
+    vi.fn<
+      (
+        listener: (event: {
+          metrics: { width: number; height: number };
+        }) => void,
+      ) => () => void
+    >(),
 };
 
 const viewportDocumentScope = {
-  scrollTo: vi.fn<(position: { x: number; y: number; behavior?: string }) => void>(),
+  scrollTo:
+    vi.fn<(position: { x: number; y: number; behavior?: string }) => void>(),
 };
 
 const scrollCapability = {
-  onScroll: vi.fn<
-    (
-      listener: (event: {
-        documentId: string;
-        metrics: { scrollOffset: { x: number; y: number } };
-      }) => void,
-    ) => () => void
-  >(),
+  onScroll:
+    vi.fn<
+      (
+        listener: (event: {
+          documentId: string;
+          metrics: { scrollOffset: { x: number; y: number } };
+        }) => void,
+      ) => () => void
+    >(),
 };
 
 let documentOpenedListener: DocumentOpenedListener = null;
 let zoomChangeListener: ZoomChangeListener = null;
 let viewportResizeListener: ViewportResizeListener = null;
 let scrollListener: ScrollListener = null;
-let lastViewerProps:
-  | {
-      config?: {
-        disabledCategories?: string[];
-        form?: {
-          withForms?: boolean;
-          withAnnotations?: boolean;
-        };
-      };
-    }
-  | null = null;
+let lastViewerProps: {
+  config?: {
+    disabledCategories?: string[];
+    form?: {
+      withForms?: boolean;
+      withAnnotations?: boolean;
+    };
+  };
+} | null = null;
 
 vi.mock("@embedpdf/react-pdf-viewer", () => {
   const ReactModule = require("react") as typeof import("react");
@@ -82,7 +97,9 @@ vi.mock("@embedpdf/react-pdf-viewer", () => {
     {
       onReady,
     }: {
-      onReady?: (registry: { getPlugin: (pluginId: string) => unknown }) => void;
+      onReady?: (registry: {
+        getPlugin: (pluginId: string) => unknown;
+      }) => void;
     },
     ref: React.ForwardedRef<{
       container: null;
@@ -212,14 +229,18 @@ describe("PdfViewer", () => {
   });
 
   it("does not remount the embedded viewer on the first src render", () => {
-    render(React.createElement(PdfViewer, { src: "file:///initial.pdf", zoom: 1 }));
+    render(
+      React.createElement(PdfViewer, { src: "file:///initial.pdf", zoom: 1 }),
+    );
 
     expect(viewerLifecycle.mounts).toBe(1);
     expect(viewerLifecycle.unmounts).toBe(0);
   });
 
   it("disables insert and form editing features in the embedded viewer config", () => {
-    render(React.createElement(PdfViewer, { src: "file:///initial.pdf", zoom: 1 }));
+    render(
+      React.createElement(PdfViewer, { src: "file:///initial.pdf", zoom: 1 }),
+    );
 
     expect(lastViewerProps?.config?.disabledCategories).toEqual(
       expect.arrayContaining(["insert", "form"]),
@@ -267,7 +288,9 @@ describe("PdfViewer", () => {
   });
 
   it("waits for a non-zero viewport before forcing the first-load redraw", () => {
-    render(React.createElement(PdfViewer, { src: "file:///initial.pdf", zoom: 1 }));
+    render(
+      React.createElement(PdfViewer, { src: "file:///initial.pdf", zoom: 1 }),
+    );
 
     zoomCapability.requestZoom.mockClear();
 
@@ -319,7 +342,10 @@ describe("PdfViewer", () => {
 
   it("restores the previous scroll offset after a document reload", () => {
     const view = render(
-      React.createElement(PdfViewer, { src: "file:///initial.pdf?rev=1", zoom: 1 }),
+      React.createElement(PdfViewer, {
+        src: "file:///initial.pdf?rev=1",
+        zoom: 1,
+      }),
     );
 
     act(() => {
@@ -331,7 +357,10 @@ describe("PdfViewer", () => {
     });
 
     view.rerender(
-      React.createElement(PdfViewer, { src: "file:///initial.pdf?rev=2", zoom: 1 }),
+      React.createElement(PdfViewer, {
+        src: "file:///initial.pdf?rev=2",
+        zoom: 1,
+      }),
     );
 
     viewportDocumentScope.scrollTo.mockClear();

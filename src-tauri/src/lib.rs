@@ -160,10 +160,7 @@ async fn set_history_watchers(
     state: State<'_, WatchState>,
     paths: Vec<String>,
 ) -> Result<(), String> {
-    let gen_id = state
-        .history_generation
-        .fetch_add(1, Ordering::Relaxed)
-        + 1;
+    let gen_id = state.history_generation.fetch_add(1, Ordering::Relaxed) + 1;
 
     {
         let mut guard = state
@@ -197,9 +194,8 @@ async fn set_history_watchers(
                 .map(|e| (e.canonical_target.clone(), e))
                 .collect(),
         );
-        let settle_timers: Arc<
-            Mutex<HashMap<PathBuf, tauri::async_runtime::JoinHandle<()>>>,
-        > = Arc::new(Mutex::new(HashMap::new()));
+        let settle_timers: Arc<Mutex<HashMap<PathBuf, tauri::async_runtime::JoinHandle<()>>>> =
+            Arc::new(Mutex::new(HashMap::new()));
 
         let filter_for_cb = Arc::clone(&filter);
         let settle_timers_for_cb = Arc::clone(&settle_timers);
@@ -251,8 +247,7 @@ async fn set_history_watchers(
                         None => return,
                     };
 
-                    let exists = target_for_settle.is_file()
-                        && is_pdf_path(&target_for_settle);
+                    let exists = target_for_settle.is_file() && is_pdf_path(&target_for_settle);
 
                     for original in &entry.original_paths {
                         let payload = HistoryPathStatus {
@@ -290,10 +285,7 @@ async fn set_history_watchers(
         }
 
         if let Err(error) = watcher.watch(&canonical_parent, RecursiveMode::NonRecursive) {
-            eprintln!(
-                "Failed to watch {}: {error}",
-                canonical_parent.display()
-            );
+            eprintln!("Failed to watch {}: {error}", canonical_parent.display());
             continue;
         }
 
@@ -628,12 +620,9 @@ fn classify_paths(paths: &[String]) -> Vec<ClassifiedPath> {
     paths
         .iter()
         .map(|raw| {
-            let resolved =
-                parse_input_path(raw).unwrap_or_else(|_| PathBuf::from(raw.trim()));
+            let resolved = parse_input_path(raw).unwrap_or_else(|_| PathBuf::from(raw.trim()));
             let file_name = file_name(&resolved);
-            let canonical_parent = resolved
-                .parent()
-                .and_then(|p| fs::canonicalize(p).ok());
+            let canonical_parent = resolved.parent().and_then(|p| fs::canonicalize(p).ok());
             let exists = resolved.is_file() && is_pdf_path(&resolved);
             ClassifiedPath {
                 original: raw.clone(),
@@ -655,13 +644,14 @@ fn group_by_canonical_parent(
         };
         let canonical_target = parent.join(&entry.file_name);
         let group = groups.entry(parent).or_default();
-        let watch_entry = group
-            .entry(canonical_target.clone())
-            .or_insert_with(|| HistoryWatchEntry {
-                canonical_target: canonical_target.clone(),
-                file_name: entry.file_name.clone(),
-                original_paths: Vec::new(),
-            });
+        let watch_entry =
+            group
+                .entry(canonical_target.clone())
+                .or_insert_with(|| HistoryWatchEntry {
+                    canonical_target: canonical_target.clone(),
+                    file_name: entry.file_name.clone(),
+                    original_paths: Vec::new(),
+                });
         watch_entry.original_paths.push(entry.original);
     }
     groups
@@ -902,7 +892,10 @@ mod tests {
         let entry = &out[0];
         assert_eq!(entry.original, original);
         // File does not exist but parent ($HOME) usually does, so canonical_parent is Some.
-        assert_eq!(entry.file_name, ".gstack-realtime-pdf-classify-test-does-not-exist.pdf");
+        assert_eq!(
+            entry.file_name,
+            ".gstack-realtime-pdf-classify-test-does-not-exist.pdf"
+        );
         assert!(entry.canonical_parent.is_some());
         assert!(!entry.exists);
     }
@@ -935,9 +928,8 @@ mod tests {
 
     #[test]
     fn classify_paths_marks_missing_parent_as_none() {
-        let parent = PathBuf::from(
-            "/var/empty/realtime-pdf-no-such-dir-12345/sub-vanished/another",
-        );
+        let parent =
+            PathBuf::from("/var/empty/realtime-pdf-no-such-dir-12345/sub-vanished/another");
         let target = parent.join("foo.pdf");
         let out = classify_paths(&[target.to_string_lossy().into_owned()]);
         assert_eq!(out.len(), 1);
@@ -1001,7 +993,11 @@ mod tests {
         let groups = group_by_canonical_parent(classified);
         assert_eq!(groups.len(), 1, "both paths share one canonical parent");
         let entries = groups.into_values().next().unwrap();
-        assert_eq!(entries.len(), 1, "both paths collapse to one canonical_target entry");
+        assert_eq!(
+            entries.len(),
+            1,
+            "both paths collapse to one canonical_target entry"
+        );
         let entry = &entries[0];
         assert_eq!(entry.original_paths.len(), 2, "both originals are tracked");
         assert!(entry.original_paths.contains(&inputs[0]));

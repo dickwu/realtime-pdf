@@ -3,8 +3,7 @@
   --rtpdf-font:
     -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro",
     "Helvetica Neue", system-ui, sans-serif;
-  --rtpdf-mono:
-    ui-monospace, "SF Mono", "JetBrains Mono", Menlo, monospace;
+  --rtpdf-mono: ui-monospace, "SF Mono", "JetBrains Mono", Menlo, monospace;
 }
 
 * {

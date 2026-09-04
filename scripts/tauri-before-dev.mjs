@@ -89,7 +89,16 @@ async function findRepoLocalServer() {
 async function startNextDevServer() {
   const child = spawn(
     "bun",
-    ["--bun", "next", "dev", "--turbopack", "--port", String(PORT), "--hostname", HOST],
+    [
+      "--bun",
+      "next",
+      "dev",
+      "--turbopack",
+      "--port",
+      String(PORT),
+      "--hostname",
+      HOST,
+    ],
     {
       cwd: repoRoot,
       stdio: "inherit",

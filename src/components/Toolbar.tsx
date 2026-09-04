@@ -392,7 +392,9 @@ export default function Toolbar({
             <span
               style={{
                 fontSize: 10.5,
-                color: recentsOpen ? "rgba(255,255,255,0.85)" : "var(--ink-muted)",
+                color: recentsOpen
+                  ? "rgba(255,255,255,0.85)"
+                  : "var(--ink-muted)",
                 fontWeight: 600,
               }}
             >

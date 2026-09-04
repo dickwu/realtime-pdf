@@ -183,13 +183,7 @@ export function FitIcon(props: IconProps) {
 export function SunIcon(props: IconProps) {
   return (
     <svg width={14} height={14} viewBox="0 0 14 14" fill="none" {...props}>
-      <circle
-        cx={7}
-        cy={7}
-        r={3}
-        stroke="currentColor"
-        strokeWidth={1.3}
-      />
+      <circle cx={7} cy={7} r={3} stroke="currentColor" strokeWidth={1.3} />
       <path
         d="M7 1v1.5M7 11.5V13M1 7h1.5M11.5 7H13M2.5 2.5l1 1M10.5 10.5l1 1M2.5 11.5l1-1M10.5 3.5l1-1"
         stroke="currentColor"

@@ -1,12 +1,6 @@
 "use client";
 
-import {
-  useCallback,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-} from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { convertFileSrc, invoke, isTauri } from "@tauri-apps/api/core";
 import { listen } from "@tauri-apps/api/event";
 import { getCurrentWebviewWindow } from "@tauri-apps/api/webviewWindow";
@@ -14,10 +8,7 @@ import { LazyStore } from "@tauri-apps/plugin-store";
 import HookDock from "@/components/HookDock";
 import PdfViewer from "@/components/PdfViewer";
 import RecentsDropdown from "@/components/RecentsDropdown";
-import {
-  AmbientReloadIndicator,
-  ReloadToast,
-} from "@/components/ReloadToast";
+import { AmbientReloadIndicator, ReloadToast } from "@/components/ReloadToast";
 import SettingsSheet from "@/components/SettingsSheet";
 import Toolbar, { type ToolbarStatusTone } from "@/components/Toolbar";
 import UpdateChecker from "@/components/UpdateChecker";
@@ -134,9 +125,9 @@ export default function Home() {
   const [hookPathStatuses, setHookPathStatuses] = useState<
     Record<string, HistoryPathStatus>
   >({});
-  const [hookStatuses, setHookStatuses] = useState<
-    Record<string, HookStatus>
-  >({});
+  const [hookStatuses, setHookStatuses] = useState<Record<string, HookStatus>>(
+    {},
+  );
   const [historyError, setHistoryError] = useState<string | null>(null);
   const [copySourcePath, setCopySourcePath] = useState("");
   const [statusText, setStatusText] = useState(
@@ -158,7 +149,8 @@ export default function Home() {
   const currentHistoryEntry = useMemo(
     () =>
       selectedPdf
-        ? watchHistory.find((entry) => entry.path === selectedPdf.path) ?? null
+        ? (watchHistory.find((entry) => entry.path === selectedPdf.path) ??
+          null)
         : null,
     [selectedPdf, watchHistory],
   );
@@ -328,9 +320,7 @@ export default function Home() {
   const upsertHistory = useCallback(
     (selection: PdfSelection) => {
       persistHistory((current) => {
-        const existing = current.find(
-          (entry) => entry.path === selection.path,
-        );
+        const existing = current.find((entry) => entry.path === selection.path);
         return upsertWatchHistoryEntry(current, {
           path: selection.path,
           fileName: selection.fileName,
@@ -463,14 +453,19 @@ export default function Home() {
     const restorePreferences = async () => {
       try {
         const store = await getStore();
-        const [savedPath, savedZoom, savedHistory, storedScrollOffsets, savedTheme] =
-          await Promise.all([
-            store?.get<string>("watchPath"),
-            store?.get<number>("zoom"),
-            store?.get<WatchHistoryEntry[]>("watchHistory"),
-            store?.get<Record<string, ScrollOffset>>("scrollOffsets"),
-            store?.get<string>("theme"),
-          ]);
+        const [
+          savedPath,
+          savedZoom,
+          savedHistory,
+          storedScrollOffsets,
+          savedTheme,
+        ] = await Promise.all([
+          store?.get<string>("watchPath"),
+          store?.get<number>("zoom"),
+          store?.get<WatchHistoryEntry[]>("watchHistory"),
+          store?.get<Record<string, ScrollOffset>>("scrollOffsets"),
+          store?.get<string>("theme"),
+        ]);
 
         if (cancelled) return;
 
@@ -488,8 +483,7 @@ export default function Home() {
             id: hook.id || createHookId(),
             watchPath: hook.watchPath ?? "",
             command: hook.command ?? "",
-            executionPath:
-              hook.executionPath || DEFAULT_HOOK_EXECUTION_PATH,
+            executionPath: hook.executionPath || DEFAULT_HOOK_EXECUTION_PATH,
             enabled: hook.enabled ?? true,
           })),
         }));
@@ -922,9 +916,7 @@ export default function Home() {
   const handleCopyHooksFromTemplate = useCallback(() => {
     if (!currentHistoryEntry || !copySourcePath) return;
 
-    const source = watchHistory.find(
-      (entry) => entry.path === copySourcePath,
-    );
+    const source = watchHistory.find((entry) => entry.path === copySourcePath);
     if (!source || source.hooks.length === 0) return;
 
     const clonedHooks = source.hooks.map((hook) => ({
@@ -940,12 +932,7 @@ export default function Home() {
         clonedHooks.length === 1 ? "" : "s"
       } from ${source.fileName}.`,
     );
-  }, [
-    copySourcePath,
-    currentHistoryEntry,
-    updateCurrentHooks,
-    watchHistory,
-  ]);
+  }, [copySourcePath, currentHistoryEntry, updateCurrentHooks, watchHistory]);
 
   const handleToggleTheme = useCallback(() => {
     setTheme((current) => (current === "dark" ? "light" : "dark"));
@@ -969,9 +956,7 @@ export default function Home() {
       return;
     }
 
-    const root = document.querySelector<HTMLElement>(
-      "[data-rtpdf-hook-dock]",
-    );
+    const root = document.querySelector<HTMLElement>("[data-rtpdf-hook-dock]");
     if (!root) return;
 
     const update = () => setDockHeight(root.offsetHeight);
@@ -1027,7 +1012,7 @@ export default function Home() {
               src={viewerSrc}
               initialScrollOffset={
                 selectedPdf
-                  ? savedScrollOffsets[selectedPdf.path] ?? ZERO_SCROLL_OFFSET
+                  ? (savedScrollOffsets[selectedPdf.path] ?? ZERO_SCROLL_OFFSET)
                   : ZERO_SCROLL_OFFSET
               }
               zoom={zoom}

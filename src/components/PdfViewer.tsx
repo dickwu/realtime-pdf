@@ -36,17 +36,17 @@ type DocumentManagerCapability = {
 
 type ZoomCapability = {
   requestZoom: (level: number) => void;
-  onZoomChange?: (
-    listener: (event: { newZoom: number }) => void,
-  ) => () => void;
+  onZoomChange?: (listener: (event: { newZoom: number }) => void) => () => void;
 };
 
 type ViewportCapability = {
   getMetrics: () => { width: number; height: number };
-  forDocument?: (
-    documentId: string,
-  ) => {
-    scrollTo: (position: { x: number; y: number; behavior?: "instant" | "smooth" | "auto" }) => void;
+  forDocument?: (documentId: string) => {
+    scrollTo: (position: {
+      x: number;
+      y: number;
+      behavior?: "instant" | "smooth" | "auto";
+    }) => void;
   };
   onViewportResize?: (
     listener: (event: { metrics: { width: number; height: number } }) => void,
@@ -55,11 +55,16 @@ type ViewportCapability = {
 
 type ScrollCapability = {
   onScroll?: (
-    listener: (event: { documentId: string; metrics: { scrollOffset: { x: number; y: number } } }) => void,
+    listener: (event: {
+      documentId: string;
+      metrics: { scrollOffset: { x: number; y: number } };
+    }) => void,
   ) => () => void;
 };
 
-function getDocumentManager(registry: PluginRegistry): DocumentManagerCapability | null {
+function getDocumentManager(
+  registry: PluginRegistry,
+): DocumentManagerCapability | null {
   const plugin = registry.getPlugin("document-manager");
   return plugin?.provides?.() ?? null;
 }
@@ -69,12 +74,16 @@ function getZoomCapability(registry: PluginRegistry): ZoomCapability | null {
   return plugin?.provides?.() ?? null;
 }
 
-function getViewportCapability(registry: PluginRegistry): ViewportCapability | null {
+function getViewportCapability(
+  registry: PluginRegistry,
+): ViewportCapability | null {
   const plugin = registry.getPlugin("viewport");
   return plugin?.provides?.() ?? null;
 }
 
-function getScrollCapability(registry: PluginRegistry): ScrollCapability | null {
+function getScrollCapability(
+  registry: PluginRegistry,
+): ScrollCapability | null {
   const plugin = registry.getPlugin("scroll");
   return plugin?.provides?.() ?? null;
 }
@@ -124,7 +133,8 @@ export default function PdfViewer({
   const [viewerKey, setViewerKey] = useState(0);
 
   const clampedZoom = useMemo(() => clampZoom(zoom), [zoom]);
-  const normalizedInitialScrollOffset = normalizeScrollOffset(initialScrollOffset);
+  const normalizedInitialScrollOffset =
+    normalizeScrollOffset(initialScrollOffset);
   const initialScrollX = normalizedInitialScrollOffset.x;
   const initialScrollY = normalizedInitialScrollOffset.y;
 
@@ -198,7 +208,9 @@ export default function PdfViewer({
 
     const restoreScroll = () => {
       const documentId = currentDocumentIdRef.current;
-      const viewport = viewportCapabilityRef.current?.forDocument?.(documentId ?? "");
+      const viewport = viewportCapabilityRef.current?.forDocument?.(
+        documentId ?? "",
+      );
 
       if (documentId && viewport) {
         viewport.scrollTo({
@@ -309,7 +321,9 @@ export default function PdfViewer({
           return;
         }
 
-        const nextScrollOffset = normalizeScrollOffset(event.metrics.scrollOffset);
+        const nextScrollOffset = normalizeScrollOffset(
+          event.metrics.scrollOffset,
+        );
         savedScrollOffsetRef.current = nextScrollOffset;
         onScrollChange?.(nextScrollOffset);
       });
@@ -331,7 +345,8 @@ export default function PdfViewer({
     if (documentManager?.onDocumentError) {
       const unsubscribe = documentManager.onDocumentError((event) => {
         const error =
-          event.error ?? new Error(event.message || "Failed to load the PDF viewer.");
+          event.error ??
+          new Error(event.message || "Failed to load the PDF viewer.");
         setLoadError(error);
         onLoadError?.(error);
       });

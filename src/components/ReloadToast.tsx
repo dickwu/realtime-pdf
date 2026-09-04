@@ -21,7 +21,8 @@ export function ReloadToast({ visible, fileName, message }: ReloadToastProps) {
         opacity: visible ? 1 : 0,
         pointerEvents: "none",
         zIndex: 30,
-        transition: "opacity 220ms, transform 220ms cubic-bezier(0.32, 0.72, 0, 1)",
+        transition:
+          "opacity 220ms, transform 220ms cubic-bezier(0.32, 0.72, 0, 1)",
         background: "var(--menu-bg)",
         border: "0.5px solid var(--menu-border)",
         borderRadius: 12,

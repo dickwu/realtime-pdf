@@ -25,3 +25,4 @@ CLAUDE.local.md
 
 .tauri-key/
 .gstack/
+.claude/
